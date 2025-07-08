@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mapa con Leaflet y GeoJSONs</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map { height: 600px; width: 100%; }
+    #layer-controls {
+      background: white;
+      padding: 10px;
+      position: absolute;
+      top: 20%;
+      left: 10px;
+      z-index: 1000;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="layer-controls"></div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Inicializa el mapa
+    var map = L.map('map').setView([-26.6, -60.4], 10);
+
+    // Capa base
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Archivos GeoJSON y capas
+    var geojsonFiles = {
+      'Calles': 'datos/Leaflet/calles_2024_sp.geojson',
+      'Barrios': 'datos/Leaflet/barrios_sp.geojson',
+      'Lugares públicos': 'datos/Leaflet/lugares_publicos_sp.geojson',
+      'Manzanas': 'datos/Leaflet/mzas_poly_22_sp.geojson',
+      'Manzanas Puntos': 'datos/Leaflet/mzas_point_22_sp.geojson',
+      'Circuito electoral': 'datos/Leaflet/circuilto_elect_sp.geojson',
+      'mesas por escuelas': 'datos/Leaflet/mesas_electores_x_escuela_sp.geojson',
+      'Radios': 'datos/Leaflet/radios_censo_sp.geojson',
+      'viviendas por radio': 'datos/Leaflet/cant_viv_radio_sp.geojson',
+      "Edificaciones": 'datos/Leaflet/Edificaciones_2024_Siluetas.geojson',
+    };
+    var propiedadesPorCapa = {
+      'Calles': ['name', 'oneway'],
+      'Barrios': ['nombre'],
+      'Lugares públicos': ['leisure', 'name'],
+      'Manzanas': ['AREA', 'PERIMETER'],
+      'Manzanas Puntos': ['AREA', 'PERIMETER'],
+      'Radios':['RADIO','AREA', 'PERIMETER'],
+      'viviendas por radio': ['AREA', 'PERIMETER', 'RADIO2020','SUMADETOTA','Datos x _1','Datos x _2','Datos x _3','Datos x ra'],
+      'Circuito electoral': ['CIRC_ELECT','COUNT'],
+      'mesas por escuelas': ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN','CIRCUITO'],
+      "Edificaciones": ['area','area_in_meters','confindence','full_plus_code'],
+
+    };
+    var capas = {}; // Almacena las capas cargadas
+
+    const controlsDiv = document.getElementById('layer-controls');
+    function popupPersonalizado(feature, layer, propiedadesDeseadas) {
+    let contenido = "<strong>Info:</strong><br>";
+    propiedadesDeseadas.forEach(prop => {
+      if (feature.properties[prop]) {
+        contenido += `<strong>${prop}:</strong> ${feature.properties[prop]}<br>`;
+      }
+    });
+    layer.bindPopup(contenido || "Sin datos relevantes");
+  }
+    // Cargar cada archivo y crear su checkbox
+    Object.entries(geojsonFiles).forEach(([nombre, ruta]) => {
+      fetch(ruta)
+        .then(res => res.json())
+        .then(geojson => {
+          const propiedadesDeseadas = propiedadesPorCapa[nombre] || [];
+          const capa = L.geoJSON(geojson, {
+            onEachFeature: (feature, layer) => popupPersonalizado(feature, layer, propiedadesDeseadas)
+          });
+          capas[nombre] = capa;
+
+          // Crear checkbox
+          const label = document.createElement('label');
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.checked = false;
+          checkbox.onchange = function () {
+            if (this.checked) {
+              capas[nombre].addTo(map);
+            } else {
+              map.removeLayer(capas[nombre]);
+            }
+          };
+          
+          label.appendChild(checkbox);
+          label.appendChild(document.createTextNode(" " + nombre));
+          controlsDiv.appendChild(label);
+          controlsDiv.appendChild(document.createElement('br'));
+
+          // Agrega la capa al mapa por defecto
+        //capa.addTo(map);
+        });
+    });
+  </script>
+</body>
+</html>
