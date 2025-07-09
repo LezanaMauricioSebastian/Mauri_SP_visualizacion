@@ -26,7 +26,7 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     // Inicializa el mapa
-    var map = L.map('map').setView([-26.6, -60.4], 10);
+    var map = L.map('map').setView([-26.79005, -60.4358], 13);
 
     // Capa base
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -39,38 +39,105 @@
       'Barrios': 'datos/Leaflet/barrios_sp.geojson',
       'Lugares públicos': 'datos/Leaflet/lugares_publicos_sp.geojson',
       'Manzanas': 'datos/Leaflet/mzas_poly_22_sp.geojson',
-      'Manzanas Puntos': 'datos/Leaflet/mzas_point_22_sp.geojson',
       'Circuito electoral': 'datos/Leaflet/circuilto_elect_sp.geojson',
-      'mesas por escuelas': 'datos/Leaflet/mesas_electores_x_escuela_sp.geojson',
+      'Electores y Mesas por Escuela': 'datos/Leaflet/mesas_electores_x_escuela_sp.geojson',
       'Radios': 'datos/Leaflet/radios_censo_sp.geojson',
-      'viviendas por radio': 'datos/Leaflet/cant_viv_radio_sp.geojson',
+      'Viviendas por radio': 'datos/Leaflet/cant_viv_radio_sp.geojson',
       "Edificaciones": 'datos/Leaflet/Edificaciones_2024_Siluetas.geojson',
     };
     var propiedadesPorCapa = {
-      'Calles': ['name', 'oneway'],
+      'Calles': ['name','superclas'],
       'Barrios': ['nombre'],
       'Lugares públicos': ['leisure', 'name'],
-      'Manzanas': ['AREA', 'PERIMETER'],
-      'Manzanas Puntos': ['AREA', 'PERIMETER'],
-      'Radios':['RADIO','AREA', 'PERIMETER'],
-      'viviendas por radio': ['AREA', 'PERIMETER', 'RADIO2020','SUMADETOTA','Datos x _1','Datos x _2','Datos x _3','Datos x ra'],
-      'Circuito electoral': ['CIRC_ELECT','COUNT'],
-      'mesas por escuelas': ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN','CIRCUITO'],
+      'Manzanas': ['AREA'],
+      'Radios':['RADIO','AREA'],
+      'Viviendas por radio': ['AREA', 'RADIO2020','Datos x ra','Datos x _1','Datos x _2','Datos x _3'],
+      'Circuito electoral': ['CIRC_ELECT'],
+      'Electores y Mesas por Escuela': ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN','CIRCUITO'],
       "Edificaciones": ['area','area_in_meters','confindence','full_plus_code'],
 
     };
     var capas = {}; // Almacena las capas cargadas
+    const coloresRadios = [
+  '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00',
+  '#ffff33', '#a65628', '#f781bf', '#999999', '#66c2a5',
+  '#fc8d62', '#8da0cb', '#e78ac3', '#a6d854', '#ffd92f',
+  '#e5c494', '#b3b3b3'
+];
+    function colorPorRadio(radioId) {
+  // Convierte el id a string y calcula un índice
+  let idx = 0;
+  if (radioId) {
+    // Suma los códigos de los caracteres para obtener un índice
+    idx = String(radioId).split('').reduce((a, c) => a + c.charCodeAt(0), 0) % coloresRadios.length;
+  }
+  return coloresRadios[idx];
+}
+
+// Paleta de colores para barrios
+const coloresBarrios = [
+  '#8dd3c7', '#ffffb3', '#bebada', '#fb8072', '#80b1d3',
+  '#fdb462', '#b3de69', '#fccde5', '#d9d9d9', '#bc80bd',
+  '#ccebc5', '#ffed6f', '#e6ab02', '#a6761d', '#666666'
+];
+
+// Función para obtener color según el barrio
+function colorPorBarrio(nombreBarrio) {
+  let idx = 0;
+  if (nombreBarrio) {
+    idx = String(nombreBarrio).split('').reduce((a, c) => a + c.charCodeAt(0), 0) % coloresBarrios.length;
+  }
+  return coloresBarrios[idx];
+}
 
     const controlsDiv = document.getElementById('layer-controls');
-    function popupPersonalizado(feature, layer, propiedadesDeseadas) {
+    function popupPersonalizado(feature, layer, propiedadesDeseadas, nombreCapa) {
+
     let contenido = "<strong>Info:</strong><br>";
+    const traducciones = {
+      'Calles': { 'superclas': 'tipo', 'name': 'name' },
+      'Lugares públicos': { 'leisure': 'tipo', 'name': 'name' },
+      'Viviendas por radio': {
+        'Datos x ra': 'poblacion total',
+        'Datos x _1': 'mujeres',
+        'Datos x _2': 'varones',
+        'Datos x _3': 'viviendas',
+        'AREA': 'AREA',
+        'PERIMETER': 'PERIMETER',
+        'RADIO2020': 'RADIO2020'
+      },
+      'Electores y Mesas por Escuela': {
+        'NOMBRE_ESC': 'Escuela',
+        'CUENTADENU': 'mesas',
+        'SUMADECUEN': 'Electores',
+        'CIRCUITO': 'CIRCUITO'
+      },
+      'Circuito electoral': {'CIRC_ELECT':'CIRCUITO ELECTORAL'},
+    };
     propiedadesDeseadas.forEach(prop => {
-      if (feature.properties[prop]) {
-        contenido += `<strong>${prop}:</strong> ${feature.properties[prop]}<br>`;
+      let valor = feature.properties[prop];
+
+      // LUGARES PUBLICOS: Si no tiene nombre, poner "plaza"
+      if (nombreCapa === 'Lugares públicos' && prop === 'name' && (!valor || valor === "")) {
+        valor = "plaza";
       }
+       if (nombreCapa === 'Calles' && prop === 'superclas' && valor === 'desconocido') {
+    valor = "no pavimento";
+      }
+      // Traducción de nombre de propiedad
+      let etiqueta = (traducciones[nombreCapa] && traducciones[nombreCapa][prop]) ? traducciones[nombreCapa][prop] : prop;
+
+      if (valor !== undefined && valor !== null && valor !== "") {
+        contenido += `<strong>${etiqueta}:</strong> ${valor}<br>`;
+      }
+      
     });
     layer.bindPopup(contenido || "Sin datos relevantes");
   }
+  const coloresCalles = {
+  'pavimentado': '#1976d2',
+  'no pavimento': '#c62828'
+};
     // Cargar cada archivo y crear su checkbox
     Object.entries(geojsonFiles).forEach(([nombre, ruta]) => {
       fetch(ruta)
@@ -78,10 +145,47 @@
         .then(geojson => {
           const propiedadesDeseadas = propiedadesPorCapa[nombre] || [];
           const capa = L.geoJSON(geojson, {
-            onEachFeature: (feature, layer) => popupPersonalizado(feature, layer, propiedadesDeseadas)
+            onEachFeature: (feature, layer) => popupPersonalizado(feature, layer, propiedadesDeseadas, nombre),
+            style: nombre === 'Calles' ? function(feature) {
+              let tipo = feature.properties.superclas;
+              if (tipo === 'desconocido') tipo = 'no pavimento';
+              return {
+                color: coloresCalles[tipo] || '#757575',
+                weight: 3
+              };
+            } : nombre === 'Radios' ? function(feature) {
+              let radioId = feature.properties.RADIO || feature.properties.RADIO2020;
+              return {
+                color: colorPorRadio(radioId),
+                weight: 2,
+                fillOpacity: 0.4
+              };
+            } : nombre === 'Barrios' ? function(feature) {
+              let nombreBarrio = feature.properties.nombre;
+              return {
+                color: colorPorBarrio(nombreBarrio),
+                weight: 2,
+                fillOpacity: 0.4
+              };
+            } : nombre === 'Viviendas por radio' ? function(feature) {
+              // Compara mujeres y varones
+              const mujeres = Number(feature.properties['Datos x _1']);
+              const varones = Number(feature.properties['Datos x _2']);
+              let color = '#cccccc'; // gris por defecto si faltan datos
+              if (!isNaN(mujeres) && !isNaN(varones)) {
+                if (varones > mujeres) color = '#2196f3'; // azul
+                else if (mujeres > varones) color = '#e91e63'; // rosa
+              }
+              return {
+                color: color,
+                fillColor: color,
+                weight: 2,
+                fillOpacity: 0.5
+              };
+            } : undefined
           });
           capas[nombre] = capa;
-
+          
           // Crear checkbox
           const label = document.createElement('label');
           const checkbox = document.createElement('input');
@@ -90,9 +194,26 @@
           checkbox.onchange = function () {
             if (this.checked) {
               capas[nombre].addTo(map);
+              if (legend) { map.removeControl(legend); legend = null; }
+              if (nombre === 'Calles') {
+                legend = L.control({position: 'topright'});
+                legend.onAdd = function (map) {
+                  const div = L.DomUtil.create('div', 'info legend');
+                  div.innerHTML += '<strong>Tipo de calle</strong><br>';
+                  div.innerHTML += `<i style="background:${coloresCalles['pavimentado']};width:18px;height:18px;display:inline-block;"></i> pavimentado<br>`;
+                  div.innerHTML += `<i style="background:${coloresCalles['no pavimento']};width:18px;height:18px;display:inline-block;"></i> no pavimento<br>`;
+                  return div;
+                };
+                legend.addTo(map);
+              }
+              if (nombre === 'Viviendas por radio') addLegendViviendas();
+              if (nombre === 'Barrios') addLegendBarrios(geojson);
+              if (nombre === 'Radios') addLegendRadios(geojson);
             } else {
               map.removeLayer(capas[nombre]);
+              if (legend) { map.removeControl(legend); legend = null; }
             }
+
           };
           
           label.appendChild(checkbox);
@@ -104,6 +225,63 @@
         //capa.addTo(map);
         });
     });
+
+    let legend = null;
+
+    // Leyenda para Viviendas por radio
+    function addLegendViviendas() {
+      legend = L.control({position: 'topright'});
+      legend.onAdd = function (map) {
+        const div = L.DomUtil.create('div', 'info legend');
+        div.innerHTML += '<strong>Viviendas por radio</strong><br>';
+        div.innerHTML += `<i style="background:#2196f3;width:18px;height:18px;display:inline-block;"></i> Más varones<br>`;
+        div.innerHTML += `<i style="background:#e91e63;width:18px;height:18px;display:inline-block;"></i> Más mujeres<br>`;
+        div.innerHTML += `<i style="background:#cccccc;width:18px;height:18px;display:inline-block;"></i> Sin datos<br>`;
+        return div;
+      };
+      legend.addTo(map);
+    }
+
+    // Leyenda para Barrios
+    function addLegendBarrios(geojson) {
+      legend = L.control({position: 'topright'});
+      legend.onAdd = function (map) {
+        const div = L.DomUtil.create('div', 'info legend');
+        div.innerHTML += '<strong>Barrios</strong><br>';
+        // Obtén nombres únicos de barrios
+        const nombres = new Set();
+        geojson.features.forEach(f => {
+          if (f.properties && f.properties.nombre) nombres.add(f.properties.nombre);
+        });
+        Array.from(nombres).forEach(nombreBarrio => {
+          div.innerHTML += `<i style="background:${colorPorBarrio(nombreBarrio)};width:18px;height:18px;display:inline-block;"></i> ${nombreBarrio}<br>`;
+        });
+        return div;
+      };
+      legend.addTo(map);
+    }
+
+    // Leyenda para Radios
+    function addLegendRadios(geojson) {
+      legend = L.control({position: 'topright'});
+      legend.onAdd = function (map) {
+        const div = L.DomUtil.create('div', 'info legend');
+        div.innerHTML += '<strong>Radios</strong><br>';
+        // Muestra solo los primeros 10 radios para no saturar
+        const radios = new Set();
+        geojson.features.forEach(f => {
+          let radioId = f.properties.RADIO || f.properties.RADIO2020;
+          if (radioId) radios.add(radioId);
+        });
+        Array.from(radios).slice(0, 10).forEach(radioId => {
+          div.innerHTML += `<i style="background:${colorPorRadio(radioId)};width:18px;height:18px;display:inline-block;"></i> ${radioId}<br>`;
+        });
+        if (radios.size > 10) div.innerHTML += '...<br>';
+        return div;
+      };
+      legend.addTo(map);
+    }
+
   </script>
 </body>
 </html>
