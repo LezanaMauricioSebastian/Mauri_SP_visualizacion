@@ -2,15 +2,15 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mapa con Leaflet y GeoJSONs</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <title>Presidencia Roque Saenz Peña</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <style>
     #map { height: 600px; width: 100%; }
     #layer-controls {
       background: white;
       padding: 10px;
       position: absolute;
-      top: 20%;
+      top: 30%;
       left: 10px;
       z-index: 1000;
       border: 1px solid #ccc;
@@ -19,7 +19,9 @@
   </style>
 </head>
 <body>
-
+  <h1 style="text-align: center; font-family: sans-serif; margin-top: 10px;">
+    Presidencia Roque Sáenz Peña
+  </h1>
   <div id="layer-controls"></div>
   <div id="map"></div>
 
@@ -88,6 +90,21 @@ function colorPorBarrio(nombreBarrio) {
     idx = String(nombreBarrio).split('').reduce((a, c) => a + c.charCodeAt(0), 0) % coloresBarrios.length;
   }
   return coloresBarrios[idx];
+}
+
+// Paleta de colores para circuitos electorales
+const coloresCircuitos = [
+  '#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e',
+  '#e6ab02', '#a6761d', '#666666', '#a6cee3', '#fb9a99'
+];
+
+// Función para obtener color según circuito
+function colorPorCircuito(circuitoId) {
+  let idx = 0;
+  if (circuitoId) {
+    idx = String(circuitoId).split('').reduce((a, c) => a + c.charCodeAt(0), 0) % coloresCircuitos.length;
+  }
+  return coloresCircuitos[idx];
 }
 
     const controlsDiv = document.getElementById('layer-controls');
@@ -182,6 +199,13 @@ function colorPorBarrio(nombreBarrio) {
                 weight: 2,
                 fillOpacity: 0.5
               };
+            } : nombre === 'Circuito electoral' ? function(feature) {
+              let circuitoId = feature.properties.CIRC_ELECT;
+              return {
+                color: colorPorCircuito(circuitoId),
+                weight: 2,
+                fillOpacity: 0.4
+              };
             } : undefined
           });
           capas[nombre] = capa;
@@ -209,6 +233,7 @@ function colorPorBarrio(nombreBarrio) {
               if (nombre === 'Viviendas por radio') addLegendViviendas();
               if (nombre === 'Barrios') addLegendBarrios(geojson);
               if (nombre === 'Radios') addLegendRadios(geojson);
+              if (nombre === 'Circuito electoral') addLegendCircuitos(geojson);
             } else {
               map.removeLayer(capas[nombre]);
               if (legend) { map.removeControl(legend); legend = null; }
@@ -277,6 +302,25 @@ function colorPorBarrio(nombreBarrio) {
           div.innerHTML += `<i style="background:${colorPorRadio(radioId)};width:18px;height:18px;display:inline-block;"></i> ${radioId}<br>`;
         });
         if (radios.size > 10) div.innerHTML += '...<br>';
+        return div;
+      };
+      legend.addTo(map);
+    }
+
+    // Leyenda para Circuito electoral
+    function addLegendCircuitos(geojson) {
+      legend = L.control({position: 'topright'});
+      legend.onAdd = function (map) {
+        const div = L.DomUtil.create('div', 'info legend');
+        div.innerHTML += '<strong>Circuitos electorales</strong><br>';
+        // Obtén circuitos únicos
+        const circuitos = new Set();
+        geojson.features.forEach(f => {
+          if (f.properties && f.properties.CIRC_ELECT) circuitos.add(f.properties.CIRC_ELECT);
+        });
+        Array.from(circuitos).forEach(circuitoId => {
+          div.innerHTML += `<i style="background:${colorPorCircuito(circuitoId)};width:18px;height:18px;display:inline-block;"></i> ${circuitoId}<br>`;
+        });
         return div;
       };
       legend.addTo(map);
