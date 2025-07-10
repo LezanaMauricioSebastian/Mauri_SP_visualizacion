@@ -86,8 +86,10 @@
       'Manzanas': 'datos/Leaflet/mzas_poly_22_sp.geojson',
       'Circuito electoral': 'datos/Leaflet/circuilto_elect_sp.geojson',
       'Electores y Mesas por Escuela': 'datos/Leaflet/mesas_electores_x_escuela_sp.geojson',
+      'Mesas por Escuela': 'datos/Leaflet/mesas_electores_x_escuela_sp.geojson',
+      'Electores por Escuela': 'datos/Leaflet/mesas_electores_x_escuela_sp.geojson',
       'Radios': 'datos/Leaflet/radios_censo_sp.geojson',
-      'Viviendas por radio': 'datos/Leaflet/cant_viv_radio_sp.geojson',
+      'Viviendas y Poblacion por radio': 'datos/Leaflet/cant_viv_radio_sp.geojson',
       "Edificaciones": 'datos/Leaflet/Edificaciones_2024_Siluetas.geojson',
     };
     var propiedadesPorCapa = {
@@ -96,9 +98,11 @@
       'Lugares públicos': ['leisure', 'name'],
       'Manzanas': ['AREA'],
       'Radios':['LINK','AREA'],
-      'Viviendas por radio': ['AREA', 'RADIO2020','Datos x ra','Datos x _1','Datos x _2','Datos x _3'],
+      'Viviendas y Poblacion por radio': ['AREA', 'RADIO2020','Datos x ra','Datos x _1','Datos x _2','Datos x _3'],
       'Circuito electoral': ['CIRC_ELECT'],
       'Electores y Mesas por Escuela': ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN','CIRCUITO'],
+      'Mesas por Escuela': ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN','CIRCUITO'],
+      'Electores por Escuela': ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN','CIRCUITO'],
       "Edificaciones": ['area','area_in_meters','confindence','full_plus_code'],
 
     };
@@ -157,7 +161,7 @@ function colorPorCircuito(circuitoId) {
     const traducciones = {
       'Calles': { 'superclas': 'tipo', 'name': 'name' },
       'Lugares públicos': { 'leisure': 'tipo', 'name': 'name' },
-      'Viviendas por radio': {
+      'Viviendas y Poblacion por radio': {
         'Datos x ra': 'poblacion total',
         'Datos x _1': 'mujeres',
         'Datos x _2': 'varones',
@@ -168,6 +172,18 @@ function colorPorCircuito(circuitoId) {
       },
       'Radios':{'LINK':'RADIO'},
       'Electores y Mesas por Escuela': {
+        'NOMBRE_ESC': 'Escuela',
+        'CUENTADENU': 'mesas',
+        'SUMADECUEN': 'Electores',
+        'CIRCUITO': 'CIRCUITO'
+      },
+      'Mesas por Escuela': {
+        'NOMBRE_ESC': 'Escuela',
+        'CUENTADENU': 'mesas',
+        'SUMADECUEN': 'Electores',
+        'CIRCUITO': 'CIRCUITO'
+      },
+      'Electores por Escuela': {
         'NOMBRE_ESC': 'Escuela',
         'CUENTADENU': 'mesas',
         'SUMADECUEN': 'Electores',
@@ -207,8 +223,54 @@ function colorPorCircuito(circuitoId) {
     .then(res => res.json())
     .then(geojson => {
       const propiedadesDeseadas = propiedadesPorCapa[nombre] || [];
+      if (nombre === 'Mesas por Escuela' || nombre === 'Electores por Escuela') {
+        const cantidades = geojson.features.map(feature => 
+    nombre === 'Mesas por Escuela' ? feature.properties.CUENTADENU : feature.properties.SUMADECUEN
+  );
 
-      if (nombre === 'Electores y Mesas por Escuela') {
+  // Calculamos la media
+  const media = cantidades.reduce((a,b) => a+b, 0) / cantidades.length;
+
+  const clusterGroup = L.markerClusterGroup({
+    iconCreateFunction: function (cluster) {
+      let suma = 0;
+      cluster.getAllChildMarkers().forEach(marker => {
+        const match = marker.options.icon.options.html.match(/>(\d+)</);
+        if (match) suma += parseInt(match[1]);
+      });
+
+      // Color según si la suma supera la media
+      const colorFondo = suma > media ? '#d32f2f' : '#ef9a9a'; // rojo oscuro y rojo claro
+
+      return L.divIcon({
+        html: `<div style="background:${colorFondo};color:white;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-weight:bold;">${suma}</div>`,
+        className: '',
+        iconSize: [40, 40]
+      });
+    }
+  });    
+        geojson.features.forEach(feature => {
+          const coords = feature.geometry.coordinates;
+          const latlng = L.latLng(coords[1], coords[0]);
+        
+          const cantidad = nombre === 'Mesas por Escuela'
+            ? feature.properties.CUENTADENU
+            : feature.properties.SUMADECUEN;
+        
+          const icono = L.divIcon({
+            html: `<div style="background:#2196f3;color:white;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-weight:bold;">${cantidad}</div>`,
+            className: '', // sin clases por defecto
+            iconSize: [40, 40]
+          });
+        
+          const marker = L.marker(latlng, { icon: icono });
+          popupPersonalizado(feature, marker, propiedadesDeseadas, nombre);
+          clusterGroup.addLayer(marker);
+        });
+      
+        capas[nombre] = clusterGroup;
+      }
+      else  if (nombre === 'Electores y Mesas por Escuela') {
         const clusterGroup = L.markerClusterGroup();
 
         geojson.features.forEach(feature => {
