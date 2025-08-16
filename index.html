@@ -496,7 +496,7 @@
           },
           'Población por Radio': {
             file: 'poblac_viv_radio_22_amgr.geojson',
-            properties: ['AREA', 'RADIO2020', 'Datos x ra', 'Datos x _1', 'Datos x _2', 'Datos x _3'],
+            properties: ['AREA', 'LINK', '2022Total', '2022Mujere', '2022Varone', '2022Total_'],
             icon: 'fas fa-users',
             group: 'Censo'
           }
@@ -557,7 +557,12 @@
         'Datos x _2': 'Varones',
         'Datos x _3': 'Viviendas',
         'AREA': 'Área',
-        'RADIO2020': 'Radio'
+        'RADIO2020': 'Radio',
+        'LINK': 'Radio',
+        '2022Total': 'Población total',
+        '2022Mujere': 'Mujeres',
+        '2022Varone': 'Varones',
+        '2022Total_': 'Viviendas'
       },
       'Radios Censales': { 'LINK': 'Radio' },
       'Mesas por Escuela': {
@@ -718,8 +723,8 @@
           } else if (layerName.includes('Radio') || layerName.includes('Población')) {
             // Lógica especial para datos de población con género
             if (layerName.includes('Población')) {
-              const mujeres = Number(feature.properties['Datos x _1'] || 0);
-              const varones = Number(feature.properties['Datos x _2'] || 0);
+              const mujeres = Number(feature.properties['Datos x _1'] || feature.properties['2022Mujere'] || 0);
+              const varones = Number(feature.properties['Datos x _2'] || feature.properties['2022Varone'] || 0);
               
               let color = colorPalettes.genero.sin_datos;
               
