@@ -612,6 +612,9 @@
       baseMaps["OpenStreetMap"].addTo(map);
       L.control.layers(baseMaps).addTo(map);
 
+      // Mover controles de zoom para evitar solapamiento con nuestro panel
+      map.zoomControl.setPosition('topright');
+
       document.getElementById('loading').style.display = 'none';
     }
 
