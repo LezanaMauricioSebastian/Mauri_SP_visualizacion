@@ -2,456 +2,1032 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Presidencia Roque Saenz Peña</title>
-<!-- Leaflet base -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa Interactivo - Chaco</title>
 
-<!-- Leaflet MarkerCluster plugin -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
-<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-<style>
-    #map { height: 600px; width: 100%; }
-    #layer-controls {
-      background: white;
-      padding: 10px;
-      position: absolute;
-      top: 30%;
-      left: 10px;
-      z-index: 1000;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <!-- Leaflet MarkerCluster CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    .leaflet-popup.popup-oscuro,
-.leaflet-popup.popup-oscuro .leaflet-popup-content-wrapper,
-.leaflet-popup.popup-oscuro .leaflet-popup-content,
-.leaflet-popup.popup-oscuro .leaflet-popup-tip {
-    background-color: rgba(0, 0, 0, 0.5) !important;
-  box-shadow: none !important;
-}
 
-.leaflet-popup.popup-oscuro .leaflet-popup-content {
-  background: none !important;
-  color: #ffffff !important;
-  font-family: sans-serif !important;
-  font-size: 14px;
-}
-.leaflet-popup.popup-oscuro .leaflet-popup-content-wrapper {
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-.leaflet-popup.popup-oscuro .leaflet-popup-close-button {
-    color: #ffffff !important;
-  text-shadow: none !important;
-  font-weight: bold;
-}
-.leaflet-popup.popup-oscuro .leaflet-popup-tip-container,
-.leaflet-popup.popup-oscuro .leaflet-popup-tip {
-  display: none !important;
-}
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
 
-.leaflet-popup.popup-oscuro .leaflet-popup-close-button {
-  display: none !important;
-}
+    .header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 1rem 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      position: relative;
+      z-index: 1001;
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo i {
+      color: #667eea;
+      font-size: 1.5rem;
+    }
+
+    .logo h1 {
+      color: #2d3748;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .city-selector {
+      display: flex;
+      background: white;
+      border-radius: 12px;
+      padding: 4px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      border: 2px solid #e2e8f0;
+    }
+
+    .city-option {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      color: #64748b;
+    }
+
+    .city-option.active {
+      background: #667eea;
+      color: white;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .city-option:hover:not(.active) {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    .map-container {
+      height: calc(100vh - 120px);
+      position: relative;
+      margin: 1rem;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+    }
+
+    .controls-panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 1rem;
+      max-width: 300px;
+      max-height: 70vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      z-index: 1000;
+    }
+
+    .controls-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .controls-header i {
+      color: #667eea;
+    }
+
+    .controls-header h3 {
+      color: #2d3748;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .layer-group {
+      margin-bottom: 1rem;
+    }
+
+    .layer-group-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .layer-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 8px;
+      transition: background-color 0.2s ease;
+    }
+
+    .layer-item:hover {
+      background: rgba(102, 126, 234, 0.05);
+    }
+
+    .layer-checkbox {
+      margin-right: 0.75rem;
+      accent-color: #667eea;
+      transform: scale(1.1);
+    }
+
+    .layer-label {
+      font-size: 0.9rem;
+      color: #4a5568;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .layer-count {
+      font-size: 0.75rem;
+      color: #718096;
+      background: #e2e8f0;
+      padding: 0.125rem 0.375rem;
+      border-radius: 12px;
+    }
+
+    /* Custom popup styles */
+    .leaflet-popup.custom-popup .leaflet-popup-content-wrapper {
+      background: rgba(45, 55, 72, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .leaflet-popup.custom-popup .leaflet-popup-content {
+      color: white;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      margin: 1rem;
+    }
+
+    .leaflet-popup.custom-popup .leaflet-popup-tip {
+      background: rgba(45, 55, 72, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .leaflet-popup.custom-popup .leaflet-popup-close-button {
+      color: #cbd5e0;
+      font-size: 18px;
+      font-weight: bold;
+      right: 8px;
+      top: 8px;
+    }
+
+    .popup-title {
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(102, 126, 234, 0.3);
+      padding-bottom: 0.25rem;
+    }
+
+    .popup-item {
+      margin-bottom: 0.25rem;
+    }
+
+    .popup-label {
+      font-weight: 500;
+      color: #a0aec0;
+    }
+
+    .popup-value {
+      color: #e2e8f0;
+    }
+
+    /* Legend styles */
+    .legend {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .legend-title {
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.25rem;
+      font-size: 0.8rem;
+    }
+
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      margin-right: 0.5rem;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    /* Loading spinner */
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 1.2rem;
+      z-index: 1002;
+    }
+
+    .spinner {
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .controls-panel {
+        position: fixed;
+        top: auto;
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        max-width: none;
+        max-height: 40vh;
+      }
+
+      .map-container {
+        margin: 0.5rem;
+        height: calc(100vh - 140px);
+      }
+    }
+
+    /* Scrollbar styling */
+    .controls-panel::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .controls-panel::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 3px;
+    }
+
+    .controls-panel::-webkit-scrollbar-thumb {
+      background: rgba(102, 126, 234, 0.3);
+      border-radius: 3px;
+    }
+
+    .controls-panel::-webkit-scrollbar-thumb:hover {
+      background: rgba(102, 126, 234, 0.5);
+    }
   </style>
 </head>
 <body>
-  <h1 style="text-align: center; font-family: sans-serif; margin-top: 10px;">
-    Presidencia Roque Sáenz Peña
-  </h1>
-  <div id="layer-controls"></div>
-  <div id="map"></div>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <i class="fas fa-map-marked-alt"></i>
+        <h1>Mapa Interactivo del Chaco</h1>
+      </div>
+      <div class="city-selector">
+        <button type="button" class="city-option active" data-city="sp">
+          <i class="fas fa-city"></i> Presidencia Roque S. Peña
+        </button>
+        <button type="button" class="city-option" data-city="gr">
+          <i class="fas fa-building"></i> Gran Resistencia
+        </button>
+      </div>
+    </div>
+  </header>
 
-    <!-- Leaflet -->
+  <div class="map-container">
+    <div class="loading" id="loading">
+      <i class="fas fa-spinner spinner"></i>
+      Cargando mapa...
+    </div>
+    <div id="map"></div>
+    <div class="controls-panel" id="controls-panel">
+      <div class="controls-header">
+        <i class="fas fa-layer-group"></i>
+        <h3>Capas del Mapa</h3>
+      </div>
+      <div id="layer-controls"></div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- MarkerCluster -->
+  <!-- MarkerCluster JS -->
   <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
-<script>
-    // Inicializa el mapa
-    var map = L.map('map').setView([-26.79005, -60.4358], 13);
 
-    // Capa base
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-
-    // Archivos GeoJSON y capas
-    var geojsonFiles = {
-      'Calles': 'datos/Leaflet/calles_2024_sp.geojson',
-      'Barrios': 'datos/Leaflet/barrios_sp.geojson',
-      'Lugares públicos': 'datos/Leaflet/lugares_publicos_sp.geojson',
-      'Manzanas': 'datos/Leaflet/mzas_poly_22_sp.geojson',
-      'Circuito electoral': 'datos/Leaflet/circuilto_elect_sp.geojson',
-      'Electores y Mesas por Escuela': 'datos/Leaflet/mesas_electores_x_escuela_sp.geojson',
-      'Mesas por Escuela': 'datos/Leaflet/mesas_electores_x_escuela_sp.geojson',
-      'Electores por Escuela': 'datos/Leaflet/mesas_electores_x_escuela_sp.geojson',
-      'Radios': 'datos/Leaflet/radios_censo_sp.geojson',
-      'Viviendas y Poblacion por radio': 'datos/Leaflet/cant_viv_radio_sp.geojson',
-      "Edificaciones": 'datos/Leaflet/Edificaciones_2024_Siluetas.geojson',
-    };
-    var propiedadesPorCapa = {
-      'Calles': ['name','superclas'],
-      'Barrios': ['nombre'],
-      'Lugares públicos': ['leisure', 'name'],
-      'Manzanas': ['AREA'],
-      'Radios':['LINK','AREA'],
-      'Viviendas y Poblacion por radio': ['AREA', 'RADIO2020','Datos x ra','Datos x _1','Datos x _2','Datos x _3'],
-      'Circuito electoral': ['CIRC_ELECT'],
-      'Electores y Mesas por Escuela': ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN','CIRCUITO'],
-      'Mesas por Escuela': ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN','CIRCUITO'],
-      'Electores por Escuela': ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN','CIRCUITO'],
-      "Edificaciones": ['area','area_in_meters','confindence','full_plus_code'],
-
-    };
-    var capas = {}; // Almacena las capas cargadas
-    const coloresRadios = [
-  '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00',
-  '#ffff33', '#a65628', '#f781bf', '#999999', '#66c2a5',
-  '#fc8d62', '#8da0cb', '#e78ac3', '#a6d854', '#ffd92f',
-  '#e5c494', '#b3b3b3'
-];
-    function colorPorRadio(radioId) {
-  // Convierte el id a string y calcula un índice
-  let idx = 0;
-  if (radioId) {
-    // Suma los códigos de los caracteres para obtener un índice
-    idx = String(radioId).split('').reduce((a, c) => a + c.charCodeAt(0), 0) % coloresRadios.length;
-  }
-  return coloresRadios[idx];
-}
-
-// Paleta de colores para barrios
-const coloresBarrios = [
-  '#8dd3c7', '#ffffb3', '#bebada', '#fb8072', '#80b1d3',
-  '#fdb462', '#b3de69', '#fccde5', '#d9d9d9', '#bc80bd',
-  '#ccebc5', '#ffed6f', '#e6ab02', '#a6761d', '#666666'
-];
-
-// Función para obtener color según el barrio
-function colorPorBarrio(nombreBarrio) {
-  let idx = 0;
-  if (nombreBarrio) {
-    idx = String(nombreBarrio).split('').reduce((a, c) => a + c.charCodeAt(0), 0) % coloresBarrios.length;
-  }
-  return coloresBarrios[idx];
-}
-
-// Paleta de colores para circuitos electorales
-const coloresCircuitos = [
-  '#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e',
-  '#e6ab02', '#a6761d', '#666666', '#a6cee3', '#fb9a99'
-];
-
-// Función para obtener color según circuito
-function colorPorCircuito(circuitoId) {
-  let idx = 0;
-  if (circuitoId) {
-    idx = String(circuitoId).split('').reduce((a, c) => a + c.charCodeAt(0), 0) % coloresCircuitos.length;
-  }
-  return coloresCircuitos[idx];
-}
-
-    const controlsDiv = document.getElementById('layer-controls');
-    function popupPersonalizado(feature, layer, propiedadesDeseadas, nombreCapa) {
-
-    let contenido = "<strong>Info:</strong><br>";
-    const traducciones = {
-      'Calles': { 'superclas': 'tipo', 'name': 'name' },
-      'Lugares públicos': { 'leisure': 'tipo', 'name': 'name' },
-      'Viviendas y Poblacion por radio': {
-        'Datos x ra': 'poblacion total',
-        'Datos x _1': 'mujeres',
-        'Datos x _2': 'varones',
-        'Datos x _3': 'viviendas',
-        'AREA': 'AREA',
-        'PERIMETER': 'PERIMETER',
-        'RADIO2020': 'RADIO2020'
+  <script>
+    // Configuración de ciudades
+    const cities = {
+      sp: {
+        name: 'Presidencia Roque Sáenz Peña',
+        center: [-26.79005, -60.4358],
+        zoom: 13,
+        dataPath: 'datos/SP/',
+        layers: {
+          'Calles': {
+            file: 'calles_2024_sp.geojson',
+            properties: ['name', 'superclas'],
+            icon: 'fas fa-road',
+            group: 'Infraestructura'
+          },
+          'Barrios': {
+            file: 'barrios_sp.geojson',
+            properties: ['nombre'],
+            icon: 'fas fa-home',
+            group: 'Divisiones'
+          },
+          'Lugares públicos': {
+            file: 'lugares_publicos_sp.geojson',
+            properties: ['leisure', 'name'],
+            icon: 'fas fa-tree',
+            group: 'Servicios'
+          },
+          'Manzanas': {
+            file: 'mzas_poly_22_sp.geojson',
+            properties: ['AREA'],
+            icon: 'fas fa-th',
+            group: 'Divisiones'
+          },
+          'Circuito electoral': {
+            file: 'circuilto_elect_sp.geojson',
+            properties: ['CIRC_ELECT'],
+            icon: 'fas fa-vote-yea',
+            group: 'Electoral'
+          },
+          'Mesas por Escuela': {
+            file: 'mesas_electores_x_escuela_sp.geojson',
+            properties: ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN', 'CIRCUITO'],
+            icon: 'fas fa-school',
+            group: 'Electoral',
+            type: 'clustered',
+            valueProperty: 'CUENTADENU'
+          },
+          'Electores por Escuela': {
+            file: 'mesas_electores_x_escuela_sp.geojson',
+            properties: ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN', 'CIRCUITO'],
+            icon: 'fas fa-users',
+            group: 'Electoral',
+            type: 'clustered',
+            valueProperty: 'SUMADECUEN'
+          },
+          'Radios Censales': {
+            file: 'radios_censo_sp.geojson',
+            properties: ['LINK', 'AREA'],
+            icon: 'fas fa-chart-area',
+            group: 'Censo'
+          },
+          'Población por Radio': {
+            file: 'cant_viv_radio_sp.geojson',
+            properties: ['AREA', 'RADIO2020', 'Datos x ra', 'Datos x _1', 'Datos x _2', 'Datos x _3'],
+            icon: 'fas fa-users',
+            group: 'Censo'
+          },
+          'Edificaciones': {
+            file: 'Edificaciones_2024_Siluetas.geojson',
+            properties: ['area', 'area_in_meters', 'confindence', 'full_plus_code'],
+            icon: 'fas fa-building',
+            group: 'Infraestructura'
+          }
+        }
       },
-      'Radios':{'LINK':'RADIO'},
-      'Electores y Mesas por Escuela': {
-        'NOMBRE_ESC': 'Escuela',
-        'CUENTADENU': 'mesas',
-        'SUMADECUEN': 'Electores',
-        'CIRCUITO': 'CIRCUITO'
+      gr: {
+        name: 'Gran Resistencia',
+        center: [-27.4606, -58.9837],
+        zoom: 12,
+        dataPath: 'datos/gran_Resis/',
+        layers: {
+          'Calles': {
+            file: 'calles_2024_amgr.geojson',
+            properties: ['name', 'superclas'],
+            icon: 'fas fa-road',
+            group: 'Infraestructura'
+          },
+          'Barrios': {
+            file: 'barrios_amgr.geojson',
+            properties: ['Barrio', 'Municipio'],
+            icon: 'fas fa-home',
+            group: 'Divisiones'
+          },
+          'Asentamientos': {
+            file: 'asentamientos_amgr.geojson',
+            properties: ['Barrios', 'Municipio'],
+            icon: 'fas fa-campground',
+            group: 'Divisiones'
+          },
+          'Lugares públicos': {
+            file: 'lugares_publicos_amgr.geojson',
+            properties: ['leisure', 'name'],
+            icon: 'fas fa-tree',
+            group: 'Servicios'
+          },
+          'Manzanas': {
+            file: 'manzanero_amgr.geojson',
+            properties: ['AREA'],
+            icon: 'fas fa-th',
+            group: 'Divisiones'
+          },
+          'Circuitos Electorales': {
+            file: 'circuitos_elect_amgr.geojson',
+            properties: ['circuito', 'cabecera', 'departamen'],
+            icon: 'fas fa-vote-yea',
+            group: 'Electoral'
+          },
+          'Población por Radio': {
+            file: 'poblac_viv_radio_22_amgr.geojson',
+            properties: ['AREA', 'RADIO2020', 'Datos x ra', 'Datos x _1', 'Datos x _2', 'Datos x _3'],
+            icon: 'fas fa-users',
+            group: 'Censo'
+          }
+        }
+      }
+    };
+
+    // Variables globales
+    let map;
+    let currentCity = 'sp';
+    let loadedLayers = {};
+    let currentLegend = null;
+
+    // Paletas de colores mejoradas
+    const colorPalettes = {
+      radios: [
+        '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', 
+        '#a65628', '#f781bf', '#999999', '#66c2a5', '#fc8d62', '#8da0cb', 
+        '#e78ac3', '#a6d854', '#ffd92f', '#e5c494', '#b3b3b3', '#1f78b4', 
+        '#33a02c', '#e31a1c', '#ff7f00', '#6a3d9a', '#b15928', '#a6cee3'
+      ],
+      barrios: [
+        '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b',
+        '#e377c2', '#7f7f7f', '#bcbd22', '#17becf', '#aec7e8', '#ffbb78',
+        '#98df8a', '#ff9896', '#c5b0d5', '#c49c94', '#f7b6d3', '#c7c7c7',
+        '#dbdb8d', '#9edae5', '#393b79', '#5254a3', '#6b6ecf', '#9c9ede'
+      ],
+      circuitos: [
+        '#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02',
+        '#a6761d', '#666666', '#a6cee3', '#fb9a99', '#b2df8a', '#33a02c',
+        '#cab2d6', '#6a3d9a', '#ffff99', '#b15928', '#fdbf6f', '#ff7f00'
+      ],
+      asentamientos: [
+        '#8e44ad', '#e74c3c', '#f39c12', '#27ae60', '#3498db', '#e67e22',
+        '#9b59b6', '#1abc9c', '#34495e', '#f1c40f', '#e8b339', '#c0392b'
+      ],
+      calles: {
+        'pavimentado': '#2196F3',
+        'no pavimento': '#FF5722'
       },
+      genero: {
+        'mas_hombres': '#64B5F6',    // Azul claro
+        'mas_mujeres': '#F48FB1',    // Rosa claro
+        'equilibrado': '#A5D6A7',    // Verde claro
+        'sin_datos': '#E0E0E0'       // Gris claro
+      }
+    };
+
+    // Traducciones para popups
+    const translations = {
+      'Calles': { 'superclas': 'Tipo', 'name': 'Nombre' },
+      'Lugares públicos': { 'leisure': 'Tipo', 'name': 'Nombre' },
+      'Barrios': { 'Barrio': 'Barrio', 'Municipio': 'Municipio', 'nombre': 'Nombre' },
+      'Asentamientos': { 'Barrios': 'Asentamiento', 'Municipio': 'Municipio' },
+      'Población por Radio': {
+        'Datos x ra': 'Población total',
+        'Datos x _1': 'Mujeres',
+        'Datos x _2': 'Varones',
+        'Datos x _3': 'Viviendas',
+        'AREA': 'Área',
+        'RADIO2020': 'Radio'
+      },
+      'Radios Censales': { 'LINK': 'Radio' },
       'Mesas por Escuela': {
         'NOMBRE_ESC': 'Escuela',
-        'CUENTADENU': 'mesas',
+        'CUENTADENU': 'Mesas',
         'SUMADECUEN': 'Electores',
-        'CIRCUITO': 'CIRCUITO'
+        'CIRCUITO': 'Circuito'
       },
       'Electores por Escuela': {
         'NOMBRE_ESC': 'Escuela',
-        'CUENTADENU': 'mesas',
+        'CUENTADENU': 'Mesas',
         'SUMADECUEN': 'Electores',
-        'CIRCUITO': 'CIRCUITO'
+        'CIRCUITO': 'Circuito'
       },
-      'Circuito electoral': {'CIRC_ELECT':'CIRCUITO ELECTORAL'},
+      'Circuito electoral': { 'CIRC_ELECT': 'Circuito Electoral' },
+      'Circuitos Electorales': { 
+        'circuito': 'Circuito', 
+        'cabecera': 'Cabecera', 
+        'departamen': 'Departamento',
+        'CIRC_ELECT': 'Circuito Electoral' 
+      }
     };
-    propiedadesDeseadas.forEach(prop => {
-      let valor = feature.properties[prop];
 
-      // LUGARES PUBLICOS: Si no tiene nombre, poner "plaza"
-      if (nombreCapa === 'Lugares públicos' && prop === 'name' && (!valor || valor === "")) {
-        valor = "plaza";
-      }
-       if (nombreCapa === 'Calles' && prop === 'superclas' && valor === 'desconocido') {
-    valor = "no pavimento";
-      }
-      // Traducción de nombre de propiedad
-      let etiqueta = (traducciones[nombreCapa] && traducciones[nombreCapa][prop]) ? traducciones[nombreCapa][prop] : prop;
-
-      if (valor !== undefined && valor !== null && valor !== "") {
-        contenido += `<strong>${etiqueta}:</strong> ${valor}<br>`;
-      }
+    // Inicialización del mapa
+    function initMap() {
+      const cityConfig = cities[currentCity];
       
-    });
-    layer.bindPopup(contenido || "Sin datos relevantes", {
-  className: 'popup-oscuro'
-});
-  }
-  const coloresCalles = {
-  'pavimentado': '#1976d2',
-  'no pavimento': '#c62828'
-};
-    // Cargar cada archivo y crear su checkbox
-    Object.entries(geojsonFiles).forEach(([nombre, ruta]) => {
-  fetch(ruta)
-    .then(res => res.json())
-    .then(geojson => {
-      const propiedadesDeseadas = propiedadesPorCapa[nombre] || [];
-      if (nombre === 'Mesas por Escuela' || nombre === 'Electores por Escuela') {
-        const cantidades = geojson.features.map(feature => 
-    nombre === 'Mesas por Escuela' ? feature.properties.CUENTADENU : feature.properties.SUMADECUEN
-  );
+      if (map) {
+        map.remove();
+      }
 
-  // Calculamos la media
-  const media = cantidades.reduce((a,b) => a+b, 0) / cantidades.length;
+      map = L.map('map').setView(cityConfig.center, cityConfig.zoom);
 
-  const clusterGroup = L.markerClusterGroup({
-    iconCreateFunction: function (cluster) {
-      let suma = 0;
-      let cant = 0;
-      cluster.getAllChildMarkers().forEach(marker => {
-        const match = marker.options.icon.options.html.match(/>(\d+)</);
-        if (match) {
-          suma += parseInt(match[1]);
-          cant +=1
+      // Capa base con múltiples opciones
+      const baseMaps = {
+        "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+        }),
+        "Satelital": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: '© Esri'
+        }),
+        "Topográfico": L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenTopoMap contributors'
+        })
+      };
+
+      baseMaps["OpenStreetMap"].addTo(map);
+      L.control.layers(baseMaps).addTo(map);
+
+      document.getElementById('loading').style.display = 'none';
+    }
+
+    // Función para obtener color por hash
+    function getColorByHash(value, palette) {
+      if (!value) return palette[0];
+      let hash = 0;
+      for (let i = 0; i < String(value).length; i++) {
+        hash = String(value).charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return palette[Math.abs(hash) % palette.length];
+    }
+
+    // Crear popup personalizado
+    function createCustomPopup(feature, layer, properties, layerName) {
+      let content = `<div class="popup-title"><i class="${cities[currentCity].layers[layerName].icon}"></i> ${layerName}</div>`;
+      
+      const layerTranslations = translations[layerName] || {};
+      
+      properties.forEach(prop => {
+        let value = feature.properties[prop];
+        
+        // Manejo de valores especiales
+        if (layerName === 'Lugares públicos' && prop === 'name' && (!value || value === "")) {
+          value = "Plaza";
         }
-
+        if (layerName === 'Calles' && prop === 'superclas' && value === 'desconocido') {
+          value = "No pavimento";
+        }
+        
+        const label = layerTranslations[prop] || prop;
+        
+        if (value !== undefined && value !== null && value !== "") {
+          content += `<div class="popup-item">
+            <span class="popup-label">${label}:</span> 
+            <span class="popup-value">${value}</span>
+          </div>`;
+        }
       });
-
-      // Color según si la suma supera la media
-      const colorFondo = suma > (suma/cant) ? '#d32f2f' : '#ef9a9a'; // rojo oscuro y rojo claro
-
-      return L.divIcon({
-        html: `<div style="background:${colorFondo};color:white;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-weight:bold;">${suma}</div>`,
-        className: '',
-        iconSize: [40, 40]
+      
+      layer.bindPopup(content, {
+        className: 'custom-popup',
+        maxWidth: 300
       });
     }
-  });    
-        geojson.features.forEach(feature => {
-          const coords = feature.geometry.coordinates;
-          const latlng = L.latLng(coords[1], coords[0]);
-        
-          const cantidad = nombre === 'Mesas por Escuela'
-            ? feature.properties.CUENTADENU
-            : feature.properties.SUMADECUEN;
-        
-          const icono = L.divIcon({
-            html: `<div style="background:#2196f3;color:white;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-weight:bold;">${cantidad}</div>`,
-            className: '', // sin clases por defecto
+
+    // Crear marcador clusterizado
+    function createClusteredLayer(geojson, layerConfig, layerName) {
+      const clusterGroup = L.markerClusterGroup({
+        iconCreateFunction: function (cluster) {
+          let total = 0;
+          let count = 0;
+          
+          cluster.getAllChildMarkers().forEach(marker => {
+            const value = marker.feature.properties[layerConfig.valueProperty];
+            if (value) {
+              total += parseInt(value);
+              count++;
+            }
+          });
+          
+          const avg = count > 0 ? total / count : 0;
+          const color = total > avg ? '#d32f2f' : '#1976d2';
+          
+          return L.divIcon({
+            html: `<div style="background:${color};color:white;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-weight:bold;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);">${total}</div>`,
+            className: '',
             iconSize: [40, 40]
           });
-        
-          const marker = L.marker(latlng, { icon: icono });
-          popupPersonalizado(feature, marker, propiedadesDeseadas, nombre);
-          clusterGroup.addLayer(marker);
-        });
+        }
+      });
       
-        capas[nombre] = clusterGroup;
-      }
-      else  if (nombre === 'Electores y Mesas por Escuela') {
-        const clusterGroup = L.markerClusterGroup();
-
-        geojson.features.forEach(feature => {
-          const coords = feature.geometry.coordinates;
-          const latlng = L.latLng(coords[1], coords[0]); // GeoJSON usa [lon, lat]
-          const marker = L.marker(latlng);
-          popupPersonalizado(feature, marker, propiedadesDeseadas, nombre);
-          clusterGroup.addLayer(marker);
+      geojson.features.forEach(feature => {
+        const coords = feature.geometry.coordinates;
+        const latlng = L.latLng(coords[1], coords[0]);
+        const value = feature.properties[layerConfig.valueProperty] || 0;
+        
+        const marker = L.marker(latlng, {
+          icon: L.divIcon({
+            html: `<div style="background:#667eea;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:bold;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.2);">${value}</div>`,
+            className: '',
+            iconSize: [32, 32]
+          })
         });
+        
+        marker.feature = feature;
+        createCustomPopup(feature, marker, layerConfig.properties, layerName);
+        clusterGroup.addLayer(marker);
+      });
+      
+      return clusterGroup;
+    }
 
-        capas[nombre] = clusterGroup;
-      } else {
-        const capa = L.geoJSON(geojson, {
-          onEachFeature: (feature, layer) => popupPersonalizado(feature, layer, propiedadesDeseadas, nombre),
-          style: nombre === 'Calles' ? function(feature) {
+    // Crear capa estándar
+    function createStandardLayer(geojson, layerConfig, layerName) {
+      return L.geoJSON(geojson, {
+        onEachFeature: (feature, layer) => {
+          createCustomPopup(feature, layer, layerConfig.properties, layerName);
+        },
+        style: function(feature) {
+          if (layerName === 'Calles') {
             let tipo = feature.properties.superclas;
             if (tipo === 'desconocido') tipo = 'no pavimento';
             return {
-              color: coloresCalles[tipo] || '#757575',
-              weight: 3
+              color: colorPalettes.calles[tipo] || '#757575',
+              weight: 3,
+              opacity: 0.8
             };
-          } : nombre === 'Radios' ? function(feature) {
-            let radioId = feature.properties.RADIO || feature.properties.RADIO2020;
-            return {
-              color: colorPorRadio(radioId),
-              weight: 2,
-              fillOpacity: 0.4
-            };
-          } : nombre === 'Barrios' ? function(feature) {
-            let nombreBarrio = feature.properties.nombre;
-            return {
-              color: colorPorBarrio(nombreBarrio),
-              weight: 2,
-              fillOpacity: 0.4
-            };
-          } : nombre === 'Viviendas por radio' ? function(feature) {
-            const mujeres = Number(feature.properties['Datos x _1']);
-            const varones = Number(feature.properties['Datos x _2']);
-            let color = '#cccccc';
-            if (!isNaN(mujeres) && !isNaN(varones)) {
-              if (varones > mujeres) color = '#2196f3';
-              else if (mujeres > varones) color = '#e91e63';
+          } else if (layerName.includes('Radio') || layerName.includes('Población')) {
+            // Lógica especial para datos de población con género
+            if (layerName.includes('Población')) {
+              const mujeres = Number(feature.properties['Datos x _1'] || 0);
+              const varones = Number(feature.properties['Datos x _2'] || 0);
+              
+              let color = colorPalettes.genero.sin_datos;
+              
+              if (mujeres > 0 && varones > 0) {
+                const diferencia = Math.abs(mujeres - varones);
+                const total = mujeres + varones;
+                const porcentajeDiferencia = (diferencia / total) * 100;
+                
+                if (porcentajeDiferencia < 5) {
+                  color = colorPalettes.genero.equilibrado;
+                } else if (varones > mujeres) {
+                  color = colorPalettes.genero.mas_hombres;
+                } else {
+                  color = colorPalettes.genero.mas_mujeres;
+                }
+              }
+              
+              return {
+                color: color,
+                fillColor: color,
+                weight: 2,
+                fillOpacity: 0.6,
+                opacity: 0.8
+              };
+            } else {
+              // Para radios censales normales
+              const radioId = feature.properties.RADIO || feature.properties.RADIO2020 || feature.properties.LINK;
+              return {
+                color: getColorByHash(radioId, colorPalettes.radios),
+                weight: 2,
+                fillOpacity: 0.4,
+                opacity: 0.8
+              };
             }
+          } else if (layerName === 'Barrios') {
+            const nombreBarrio = feature.properties.nombre || feature.properties.Barrio;
             return {
-              color: color,
-              fillColor: color,
+              color: getColorByHash(nombreBarrio, colorPalettes.barrios),
               weight: 2,
-              fillOpacity: 0.5
+              fillOpacity: 0.4,
+              opacity: 0.8
             };
-          } : nombre === 'Circuito electoral' ? function(feature) {
-            let circuitoId = feature.properties.CIRC_ELECT;
+          } else if (layerName === 'Asentamientos') {
+            const nombreAsentamiento = feature.properties.Barrios;
             return {
-              color: colorPorCircuito(circuitoId),
+              color: getColorByHash(nombreAsentamiento, colorPalettes.asentamientos),
               weight: 2,
-              fillOpacity: 0.4
+              fillOpacity: 0.5,
+              opacity: 0.8
             };
-          } : undefined
-        });
-
-        capas[nombre] = capa;
-      }
-
-      // Crear checkbox
-      const label = document.createElement('label');
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.checked = false;
-      checkbox.onchange = function () {
-        if (this.checked) {
-          capas[nombre].addTo(map);
-          if (legend) { map.removeControl(legend); legend = null; }
-
-          if (nombre === 'Calles') {
-            legend = L.control({ position: 'topright' });
-            legend.onAdd = function (map) {
-              const div = L.DomUtil.create('div', 'info legend');
-              div.innerHTML += '<strong>Tipo de calle</strong><br>';
-              div.innerHTML += `<i style="background:${coloresCalles['pavimentado']};width:18px;height:18px;display:inline-block;"></i> pavimentado<br>`;
-              div.innerHTML += `<i style="background:${coloresCalles['no pavimento']};width:18px;height:18px;display:inline-block;"></i> no pavimento<br>`;
-              return div;
+          } else if (layerName.includes('Circuito')) {
+            const circuitoId = feature.properties.CIRC_ELECT || feature.properties.circuito;
+            return {
+              color: getColorByHash(circuitoId, colorPalettes.circuitos),
+              weight: 2,
+              fillOpacity: 0.4,
+              opacity: 0.8
             };
-            legend.addTo(map);
           }
-          if (nombre === 'Viviendas por radio') addLegendViviendas();
-          if (nombre === 'Barrios') addLegendBarrios(geojson);
-          if (nombre === 'Radios') addLegendRadios(geojson);
-          if (nombre === 'Circuito electoral') addLegendCircuitos(geojson);
-        } else {
-          map.removeLayer(capas[nombre]);
-          if (legend) { map.removeControl(legend); legend = null; }
+          
+          return {
+            color: '#667eea',
+            weight: 2,
+            fillOpacity: 0.3,
+            opacity: 0.7
+          };
         }
-      };
+      });
+    }
 
-      label.appendChild(checkbox);
-      label.appendChild(document.createTextNode(" " + nombre));
-      controlsDiv.appendChild(label);
-      controlsDiv.appendChild(document.createElement('br'));
+    // Cargar capa
+    async function loadLayer(layerName, layerConfig) {
+      try {
+        const response = await fetch(cities[currentCity].dataPath + layerConfig.file);
+        if (!response.ok) throw new Error(`Error loading ${layerName}`);
+        
+        const geojson = await response.json();
+        
+        let layer;
+        if (layerConfig.type === 'clustered') {
+          layer = createClusteredLayer(geojson, layerConfig, layerName);
+        } else {
+          layer = createStandardLayer(geojson, layerConfig, layerName);
+        }
+        
+        loadedLayers[layerName] = {
+          layer: layer,
+          geojson: geojson,
+          config: layerConfig
+        };
+        
+        return geojson.features.length;
+      } catch (error) {
+        console.error(`Error loading layer ${layerName}:`, error);
+        return 0;
+      }
+    }
+
+    // Crear controles de capa
+    function createLayerControls() {
+      const controlsDiv = document.getElementById('layer-controls');
+      controlsDiv.innerHTML = '';
+      
+      const cityConfig = cities[currentCity];
+      const groups = {};
+      
+      // Agrupar capas
+      Object.entries(cityConfig.layers).forEach(([name, config]) => {
+        if (!groups[config.group]) {
+          groups[config.group] = [];
+        }
+        groups[config.group].push({ name, config });
+      });
+      
+      // Crear controles por grupo
+      Object.entries(groups).forEach(([groupName, layers]) => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'layer-group';
+        
+        const groupTitle = document.createElement('div');
+        groupTitle.className = 'layer-group-title';
+        groupTitle.textContent = groupName;
+        groupDiv.appendChild(groupTitle);
+        
+        layers.forEach(({ name, config }) => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'layer-item';
+          
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.className = 'layer-checkbox';
+          checkbox.id = `layer-${name}`;
+          
+          const label = document.createElement('label');
+          label.className = 'layer-label';
+          label.htmlFor = `layer-${name}`;
+          label.innerHTML = `<i class="${config.icon}"></i> ${name}`;
+          
+          const countSpan = document.createElement('span');
+          countSpan.className = 'layer-count';
+          countSpan.textContent = '...';
+          
+          checkbox.addEventListener('change', async function() {
+            if (this.checked) {
+              if (!loadedLayers[name]) {
+                countSpan.textContent = 'Cargando...';
+                const count = await loadLayer(name, config);
+                countSpan.textContent = count.toLocaleString();
+              }
+              
+              if (loadedLayers[name]) {
+                loadedLayers[name].layer.addTo(map);
+                updateLegend(name);
+              }
+            } else {
+              if (loadedLayers[name]) {
+                map.removeLayer(loadedLayers[name].layer);
+                removeLegend();
+              }
+            }
+          });
+          
+          itemDiv.appendChild(checkbox);
+          itemDiv.appendChild(label);
+          itemDiv.appendChild(countSpan);
+          groupDiv.appendChild(itemDiv);
+          
+          // Cargar conteo inicial
+          loadLayer(name, config).then(count => {
+            countSpan.textContent = count.toLocaleString();
+          });
+        });
+        
+        controlsDiv.appendChild(groupDiv);
+      });
+    }
+
+    // Actualizar leyenda
+    function updateLegend(layerName) {
+      removeLegend();
+      
+      if (!loadedLayers[layerName]) return;
+      
+      currentLegend = L.control({ position: 'bottomright' });
+      currentLegend.onAdd = function(map) {
+        const div = L.DomUtil.create('div', 'legend');
+        let content = `<div class="legend-title"><i class="${cities[currentCity].layers[layerName].icon}"></i> ${layerName}</div>`;
+        
+        if (layerName === 'Calles') {
+          content += `<div class="legend-item">
+            <div class="legend-color" style="background:${colorPalettes.calles['pavimentado']}"></div>
+            Pavimentado
+          </div>`;
+          content += `<div class="legend-item">
+            <div class="legend-color" style="background:${colorPalettes.calles['no pavimento']}"></div>
+            No pavimento
+          </div>`;
+        } else if (layerName.includes('Población')) {
+          content += `<div class="legend-item">
+            <div class="legend-color" style="background:${colorPalettes.genero.mas_hombres}"></div>
+            Más varones
+          </div>`;
+          content += `<div class="legend-item">
+            <div class="legend-color" style="background:${colorPalettes.genero.mas_mujeres}"></div>
+            Más mujeres
+          </div>`;
+          content += `<div class="legend-item">
+            <div class="legend-color" style="background:${colorPalettes.genero.equilibrado}"></div>
+            Equilibrado (±5%)
+          </div>`;
+          content += `<div class="legend-item">
+            <div class="legend-color" style="background:${colorPalettes.genero.sin_datos}"></div>
+            Sin datos
+          </div>`;
+        } else if (layerName === 'Barrios') {
+          const nombres = new Set();
+          loadedLayers[layerName].geojson.features.forEach(f => {
+            const nombre = f.properties && (f.properties.nombre || f.properties.Barrio);
+            if (nombre) nombres.add(nombre);
+          });
+          Array.from(nombres).slice(0, 8).forEach(nombre => {
+            content += `<div class="legend-item">
+              <div class="legend-color" style="background:${getColorByHash(nombre, colorPalettes.barrios)}"></div>
+              ${nombre}
+            </div>`;
+          });
+          if (nombres.size > 8) content += '<div style="text-align:center;color:#718096;font-size:0.75rem;">...</div>';
+        } else if (layerName === 'Asentamientos') {
+          const nombres = new Set();
+          loadedLayers[layerName].geojson.features.forEach(f => {
+            if (f.properties && f.properties.Barrios) nombres.add(f.properties.Barrios);
+          });
+          Array.from(nombres).slice(0, 6).forEach(nombre => {
+            content += `<div class="legend-item">
+              <div class="legend-color" style="background:${getColorByHash(nombre, colorPalettes.asentamientos)}"></div>
+              ${nombre}
+            </div>`;
+          });
+          if (nombres.size > 6) content += '<div style="text-align:center;color:#718096;font-size:0.75rem;">...</div>';
+        } else if (layerName.includes('Circuito')) {
+          const circuitos = new Set();
+          loadedLayers[layerName].geojson.features.forEach(f => {
+            const circuito = f.properties && (f.properties.CIRC_ELECT || f.properties.circuito);
+            if (circuito) circuitos.add(circuito);
+          });
+          Array.from(circuitos).slice(0, 8).forEach(circuito => {
+            content += `<div class="legend-item">
+              <div class="legend-color" style="background:${getColorByHash(circuito, colorPalettes.circuitos)}"></div>
+              Circuito ${circuito}
+            </div>`;
+          });
+          if (circuitos.size > 8) content += '<div style="text-align:center;color:#718096;font-size:0.75rem;">...</div>';
+        }
+        
+        div.innerHTML = content;
+        return div;
+      };
+      currentLegend.addTo(map);
+    }
+
+    // Remover leyenda
+    function removeLegend() {
+      if (currentLegend) {
+        map.removeControl(currentLegend);
+        currentLegend = null;
+      }
+    }
+
+    // Cambiar ciudad
+    function switchCity(cityKey) {
+      if (cityKey === currentCity) return;
+      
+      // Limpiar capas cargadas
+      Object.values(loadedLayers).forEach(({ layer }) => {
+        map.removeLayer(layer);
+      });
+      loadedLayers = {};
+      removeLegend();
+      
+      // Actualizar ciudad actual
+      currentCity = cityKey;
+      
+      // Actualizar botones
+      document.querySelectorAll('.city-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.city === cityKey);
+      });
+      
+      // Actualizar vista del mapa
+      const cityConfig = cities[cityKey];
+      map.setView(cityConfig.center, cityConfig.zoom);
+      
+      // Recrear controles
+      createLayerControls();
+      
+      // Actualizar título
+      document.querySelector('.logo h1').textContent = `Mapa Interactivo - ${cityConfig.name}`;
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      initMap();
+      createLayerControls();
+      
+      // Selector de ciudad
+      document.querySelectorAll('.city-option').forEach(btn => {
+        btn.addEventListener('click', () => switchCity(btn.dataset.city));
+      });
     });
-});
-
-
-    let legend = null;
-
-    // Leyenda para Viviendas por radio
-    function addLegendViviendas() {
-      legend = L.control({position: 'topright'});
-      legend.onAdd = function (map) {
-        const div = L.DomUtil.create('div', 'info legend');
-        div.innerHTML += '<strong>Viviendas por radio</strong><br>';
-        div.innerHTML += `<i style="background:#2196f3;width:18px;height:18px;display:inline-block;"></i> Más varones<br>`;
-        div.innerHTML += `<i style="background:#e91e63;width:18px;height:18px;display:inline-block;"></i> Más mujeres<br>`;
-        div.innerHTML += `<i style="background:#cccccc;width:18px;height:18px;display:inline-block;"></i> Sin datos<br>`;
-        return div;
-      };
-      legend.addTo(map);
-    }
-
-    // Leyenda para Barrios
-    function addLegendBarrios(geojson) {
-      legend = L.control({position: 'topright'});
-      legend.onAdd = function (map) {
-        const div = L.DomUtil.create('div', 'info legend');
-        div.innerHTML += '<strong>Barrios</strong><br>';
-        // Obtén nombres únicos de barrios
-        const nombres = new Set();
-        geojson.features.forEach(f => {
-          if (f.properties && f.properties.nombre) nombres.add(f.properties.nombre);
-        });
-        Array.from(nombres).forEach(nombreBarrio => {
-          div.innerHTML += `<i style="background:${colorPorBarrio(nombreBarrio)};width:18px;height:18px;display:inline-block;"></i> ${nombreBarrio}<br>`;
-        });
-        return div;
-      };
-      legend.addTo(map);
-    }
-
-    // Leyenda para Radios
-    function addLegendRadios(geojson) {
-      legend = L.control({position: 'topright'});
-      legend.onAdd = function (map) {
-        const div = L.DomUtil.create('div', 'info legend');
-        div.innerHTML += '<strong>Radios</strong><br>';
-        // Muestra solo los primeros 10 radios para no saturar
-        const radios = new Set();
-        geojson.features.forEach(f => {
-          let radioId = f.properties.RADIO || f.properties.RADIO2020;
-          if (radioId) radios.add(radioId);
-        });
-        Array.from(radios).slice(0, 10).forEach(radioId => {
-          div.innerHTML += `<i style="background:${colorPorRadio(radioId)};width:18px;height:18px;display:inline-block;"></i> ${radioId}<br>`;
-        });
-        if (radios.size > 10) div.innerHTML += '...<br>';
-        return div;
-      };
-      legend.addTo(map);
-    }
-
-    // Leyenda para Circuito electoral
-    function addLegendCircuitos(geojson) {
-      legend = L.control({position: 'topright'});
-      legend.onAdd = function (map) {
-        const div = L.DomUtil.create('div', 'info legend');
-        div.innerHTML += '<strong>Circuitos electorales</strong><br>';
-        // Obtén circuitos únicos
-        const circuitos = new Set();
-        geojson.features.forEach(f => {
-          if (f.properties && f.properties.CIRC_ELECT) circuitos.add(f.properties.CIRC_ELECT);
-        });
-        Array.from(circuitos).forEach(circuitoId => {
-          div.innerHTML += `<i style="background:${colorPorCircuito(circuitoId)};width:18px;height:18px;display:inline-block;"></i> ${circuitoId}<br>`;
-        });
-        return div;
-      };
-      legend.addTo(map);
-    }
-
   </script>
 </body>
 </html>
