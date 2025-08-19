@@ -114,12 +114,28 @@ const CITIES_CONFIG = {
         icon: 'fas fa-vote-yea',
         group: 'Electoral'
       },
-      'Población por Radio': {
-        file: 'poblac_viv_radio_22_amgr.geojson',
-        properties: ['AREA', 'LINK', '2022Total', '2022Mujere', '2022Varone', '2022Total_'],
-        icon: 'fas fa-users',
-        group: 'Censo'
-      }
+              'Mesas por Escuela': {
+          file: 'mesas_electores_x_escuelas_amgr.geojson',
+          properties: ['nombre', 'cn_mesas', 'electores', 'circuito', 'localidad'],
+          icon: 'fas fa-school',
+          group: 'Electoral',
+          type: 'clustered',
+          valueProperty: 'cn_mesas'
+        },
+        'Electores por Escuela': {
+          file: 'mesas_electores_x_escuelas_amgr.geojson',
+          properties: ['nombre', 'cn_mesas', 'electores', 'circuito', 'localidad'],
+          icon: 'fas fa-users',
+          group: 'Electoral',
+          type: 'clustered',
+          valueProperty: 'electores'
+        },
+        'Población por Radio': {
+          file: 'poblac_viv_radio_22_amgr.geojson',
+          properties: ['AREA', 'LINK', '2022Total', '2022Mujere', '2022Varone', '2022Total_'],
+          icon: 'fas fa-users',
+          group: 'Censo'
+        }
     }
   }
 };
@@ -183,13 +199,23 @@ const TRANSLATIONS = {
     'NOMBRE_ESC': 'Escuela',
     'CUENTADENU': 'Mesas',
     'SUMADECUEN': 'Electores',
-    'CIRCUITO': 'Circuito'
+    'CIRCUITO': 'Circuito',
+    'nombre': 'Escuela',
+    'cn_mesas': 'Mesas',
+    'electores': 'Electores',
+    'circuito': 'Circuito',
+    'localidad': 'Localidad'
   },
   'Electores por Escuela': {
     'NOMBRE_ESC': 'Escuela',
     'CUENTADENU': 'Mesas',
     'SUMADECUEN': 'Electores',
-    'CIRCUITO': 'Circuito'
+    'CIRCUITO': 'Circuito',
+    'nombre': 'Escuela',
+    'cn_mesas': 'Mesas',
+    'electores': 'Electores',
+    'circuito': 'Circuito',
+    'localidad': 'Localidad'
   },
   'Circuito electoral': { 'CIRC_ELECT': 'Circuito Electoral' },
   'Circuitos Electorales': { 

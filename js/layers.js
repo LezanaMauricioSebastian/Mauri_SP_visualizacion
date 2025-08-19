@@ -13,41 +13,112 @@ class LayerManager {
         let total = 0;
         let count = 0;
         
-        cluster.getAllChildMarkers().forEach(marker => {
-          const value = marker.feature.properties[layerConfig.valueProperty];
-          if (value) {
-            total += parseInt(value);
-            count++;
-          }
-        });
-        
-        const avg = count > 0 ? total / count : 0;
-        const color = total > avg ? '#d32f2f' : '#1976d2';
-        
-        return L.divIcon({
-          html: `<div style="background:${color};color:white;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-weight:bold;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);">${total}</div>`,
-          className: '',
-          iconSize: [40, 40]
-        });
-      }
+        try {
+          cluster.getAllChildMarkers().forEach(marker => {
+            if (marker && marker.feature && marker.feature.properties) {
+              const value = marker.feature.properties[layerConfig.valueProperty];
+              if (value && !isNaN(parseInt(value))) {
+                total += parseInt(value);
+                count++;
+              }
+            }
+          });
+          
+          const avg = count > 0 ? total / count : 0;
+          const color = total > avg ? '#d32f2f' : '#1976d2';
+          
+          return L.divIcon({
+            html: `<div style="background:${color};color:white;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-weight:bold;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);">${total || count}</div>`,
+            className: '',
+            iconSize: [40, 40]
+          });
+        } catch (error) {
+          console.warn('Error en iconCreateFunction:', error);
+          return L.divIcon({
+            html: `<div style="background:#999;color:white;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-weight:bold;border:3px solid white;">?</div>`,
+            className: '',
+            iconSize: [40, 40]
+          });
+        }
+      },
+      // Agregar opciones adicionales para evitar problemas
+      maxClusterRadius: 80,
+      spiderfyOnMaxZoom: false,
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true
     });
     
     geojson.features.forEach(feature => {
-      const coords = feature.geometry.coordinates;
-      const latlng = L.latLng(coords[1], coords[0]);
-      const value = feature.properties[layerConfig.valueProperty] || 0;
-      
-      const marker = L.marker(latlng, {
-        icon: L.divIcon({
-          html: `<div style="background:#667eea;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:bold;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.2);">${value}</div>`,
-          className: '',
-          iconSize: [32, 32]
-        })
-      });
-      
-      marker.feature = feature;
-      MapUtils.createCustomPopup(feature, marker, layerConfig.properties, layerName, this.mapManager.getCurrentCity());
-      clusterGroup.addLayer(marker);
+      try {
+        let coords;
+        
+        // Manejar diferentes tipos de geometría
+        if (feature.geometry.type === 'Point') {
+          coords = feature.geometry.coordinates;
+        } else if (feature.geometry.type === 'MultiPoint') {
+          // Para MultiPoint, usar el primer punto
+          coords = feature.geometry.coordinates[0];
+        } else {
+          console.warn('Tipo de geometría no soportado:', feature.geometry.type);
+          return;
+        }
+        
+        // Validar que las coordenadas existen y son números
+        if (!coords || coords.length < 2 || typeof coords[0] !== 'number' || typeof coords[1] !== 'number') {
+          console.warn('Coordenadas inválidas:', coords, 'en feature:', feature.properties);
+          return;
+        }
+        
+        // Validar que las coordenadas están en rango válido
+        if (Math.abs(coords[1]) > 90 || Math.abs(coords[0]) > 180) {
+          console.warn('Coordenadas fuera de rango:', coords, 'en feature:', feature.properties);
+          return;
+        }
+        
+        // Validación más estricta de coordenadas
+        const lat = parseFloat(coords[1]);
+        const lng = parseFloat(coords[0]);
+        
+        if (isNaN(lat) || isNaN(lng) || !isFinite(lat) || !isFinite(lng)) {
+          console.warn('Coordenadas no numéricas:', { lat, lng, coords }, 'en feature:', feature.properties);
+          return;
+        }
+        
+        let latlng;
+        try {
+          latlng = L.latLng(lat, lng);
+        } catch (error) {
+          console.warn('Error creando LatLng:', error, { lat, lng }, 'en feature:', feature.properties);
+          return;
+        }
+        
+        const value = feature.properties[layerConfig.valueProperty] || 0;
+        
+        let marker;
+        try {
+          marker = L.marker(latlng, {
+            icon: L.divIcon({
+              html: `<div style="background:#667eea;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:bold;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.2);">${value}</div>`,
+              className: '',
+              iconSize: [32, 32]
+            })
+          });
+        } catch (error) {
+          console.warn('Error creando marker:', error, { lat, lng, value }, 'en feature:', feature.properties);
+          return;
+        }
+        
+        marker.feature = feature;
+        
+        try {
+          MapUtils.createCustomPopup(feature, marker, layerConfig.properties, layerName, this.mapManager.getCurrentCity());
+          clusterGroup.addLayer(marker);
+        } catch (error) {
+          console.warn('Error agregando marker al cluster:', error, 'en feature:', feature.properties);
+        }
+      } catch (error) {
+        console.warn('Error procesando feature de mesas electorales:', error, feature);
+      }
     });
     
     return clusterGroup;
@@ -65,6 +136,51 @@ class LayerManager {
     });
   }
 
+  // Función de debug para validar GeoJSON
+  debugGeoJSON(geojson, layerName) {
+    console.log(`🔍 Analizando ${layerName}:`, {
+      totalFeatures: geojson.features.length,
+      firstFeature: geojson.features[0]
+    });
+    
+    let validFeatures = 0;
+    let invalidFeatures = 0;
+    
+    geojson.features.forEach((feature, index) => {
+      if (!feature.geometry || !feature.geometry.coordinates) {
+        console.warn(`Feature ${index} sin coordenadas:`, feature);
+        invalidFeatures++;
+        return;
+      }
+      
+      let coords;
+      if (feature.geometry.type === 'Point') {
+        coords = feature.geometry.coordinates;
+      } else if (feature.geometry.type === 'MultiPoint') {
+        coords = feature.geometry.coordinates[0];
+      }
+      
+      if (!coords || coords.length < 2) {
+        console.warn(`Feature ${index} con coordenadas inválidas:`, coords);
+        invalidFeatures++;
+        return;
+      }
+      
+      const lat = parseFloat(coords[1]);
+      const lng = parseFloat(coords[0]);
+      
+      if (isNaN(lat) || isNaN(lng)) {
+        console.warn(`Feature ${index} con coordenadas NaN:`, { lat, lng, coords });
+        invalidFeatures++;
+        return;
+      }
+      
+      validFeatures++;
+    });
+    
+    console.log(`✅ ${validFeatures} válidas, ❌ ${invalidFeatures} inválidas`);
+  }
+
   // Cargar capa
   async loadLayer(layerName, layerConfig) {
     try {
@@ -73,6 +189,11 @@ class LayerManager {
       if (!response.ok) throw new Error(`Error loading ${layerName}`);
       
       const geojson = await response.json();
+      
+      // Debug para capas clusterizadas problemáticas
+      if (layerConfig.type === 'clustered' && currentCity === 'gr') {
+        this.debugGeoJSON(geojson, layerName);
+      }
       
       let layer;
       if (layerConfig.type === 'clustered') {
