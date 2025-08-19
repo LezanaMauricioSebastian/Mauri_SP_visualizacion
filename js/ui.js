@@ -1,0 +1,135 @@
+// Módulo de interfaz de usuario
+class UIManager {
+  constructor(mapManager, layerManager) {
+    this.mapManager = mapManager;
+    this.layerManager = layerManager;
+  }
+
+  // Crear controles de capas
+  createLayerControls() {
+    const controlsDiv = document.getElementById('layer-controls');
+    controlsDiv.innerHTML = '';
+    
+    const currentCity = this.mapManager.getCurrentCity();
+    const cityConfig = CITIES_CONFIG[currentCity];
+    const groups = {};
+    
+    // Agrupar capas
+    Object.entries(cityConfig.layers).forEach(([name, config]) => {
+      if (!groups[config.group]) {
+        groups[config.group] = [];
+      }
+      groups[config.group].push({ name, config });
+    });
+    
+    // Crear controles por grupo
+    Object.entries(groups).forEach(([groupName, layers]) => {
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'layer-group';
+      
+      const groupTitle = document.createElement('div');
+      groupTitle.className = 'layer-group-title';
+      groupTitle.textContent = groupName;
+      groupDiv.appendChild(groupTitle);
+      
+      layers.forEach(({ name, config }) => {
+        const itemDiv = this.createLayerControlItem(name, config);
+        groupDiv.appendChild(itemDiv);
+        
+        // Cargar conteo inicial
+        this.layerManager.loadLayer(name, config).then(count => {
+          const countSpan = itemDiv.querySelector('.layer-count');
+          if (countSpan) {
+            countSpan.textContent = count.toLocaleString();
+          }
+        });
+      });
+      
+      controlsDiv.appendChild(groupDiv);
+    });
+  }
+
+  // Crear item de control individual
+  createLayerControlItem(name, config) {
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'layer-item';
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'layer-checkbox';
+    checkbox.id = `layer-${name}`;
+    
+    const label = document.createElement('label');
+    label.className = 'layer-label';
+    label.htmlFor = `layer-${name}`;
+    label.innerHTML = `<i class="${config.icon}"></i> ${name}`;
+    
+    const countSpan = document.createElement('span');
+    countSpan.className = 'layer-count';
+    countSpan.textContent = '...';
+    
+    // Event listener para checkbox
+    checkbox.addEventListener('change', async (event) => {
+      await this.handleLayerToggle(event.target, name, config, countSpan);
+    });
+    
+    itemDiv.appendChild(checkbox);
+    itemDiv.appendChild(label);
+    itemDiv.appendChild(countSpan);
+    
+    return itemDiv;
+  }
+
+  // Manejar toggle de capas
+  async handleLayerToggle(checkbox, name, config, countSpan) {
+    if (checkbox.checked) {
+      const loadedLayers = this.layerManager.getLoadedLayers();
+      if (!loadedLayers[name]) {
+        countSpan.textContent = 'Cargando...';
+        const count = await this.layerManager.loadLayer(name, config);
+        countSpan.textContent = count.toLocaleString();
+      }
+      
+      this.layerManager.addLayerToMap(name);
+    } else {
+      this.layerManager.removeLayerFromMap(name);
+    }
+  }
+
+  // Cambiar ciudad
+  switchCity(cityKey) {
+    if (cityKey === this.mapManager.getCurrentCity()) return;
+    
+    // Limpiar capas cargadas
+    this.layerManager.clearAllLayers();
+    
+    // Actualizar vista del mapa
+    this.mapManager.switchToCity(cityKey);
+    
+    // Actualizar botones
+    document.querySelectorAll('.city-option').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.city === cityKey);
+    });
+    
+    // Recrear controles
+    this.createLayerControls();
+    
+    // Actualizar título
+    const cityConfig = CITIES_CONFIG[cityKey];
+    document.querySelector('.logo h1').textContent = `Mapa Interactivo - ${cityConfig.name}`;
+  }
+
+  // Configurar event listeners
+  setupEventListeners() {
+    // Selector de ciudad
+    document.querySelectorAll('.city-option').forEach(btn => {
+      btn.addEventListener('click', () => this.switchCity(btn.dataset.city));
+    });
+  }
+
+  // Inicializar interfaz
+  init() {
+    this.createLayerControls();
+    this.setupEventListeners();
+  }
+} 

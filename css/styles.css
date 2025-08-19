@@ -1,0 +1,333 @@
+/* Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Estilos base */
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1001;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* Logo */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo i {
+  color: #667eea;
+  font-size: 1.5rem;
+}
+
+.logo h1 {
+  color: #2d3748;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* Selector de ciudades */
+.city-selector {
+  display: flex;
+  background: white;
+  border-radius: 12px;
+  padding: 4px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e2e8f0;
+}
+
+.city-option {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  color: #64748b;
+}
+
+.city-option.active {
+  background: #667eea;
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.city-option:hover:not(.active) {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+/* Contenedor del mapa */
+.map-container {
+  height: calc(100vh - 120px);
+  position: relative;
+  margin: 1rem;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+#map {
+  height: 100%;
+  width: 100%;
+}
+
+/* Panel de controles */
+.controls-panel {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 1rem;
+  max-width: 300px;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 1000;
+}
+
+.controls-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.controls-header i {
+  color: #667eea;
+}
+
+.controls-header h3 {
+  color: #2d3748;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Grupos de capas */
+.layer-group {
+  margin-bottom: 1rem;
+}
+
+.layer-group-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.layer-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.layer-item:hover {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.layer-checkbox {
+  margin-right: 0.75rem;
+  accent-color: #667eea;
+  transform: scale(1.1);
+}
+
+.layer-label {
+  font-size: 0.9rem;
+  color: #4a5568;
+  cursor: pointer;
+  flex: 1;
+}
+
+.layer-count {
+  font-size: 0.75rem;
+  color: #718096;
+  background: #e2e8f0;
+  padding: 0.125rem 0.375rem;
+  border-radius: 12px;
+}
+
+/* Estilos de popups personalizados */
+.leaflet-popup.custom-popup .leaflet-popup-content-wrapper {
+  background: rgba(45, 55, 72, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.leaflet-popup.custom-popup .leaflet-popup-content {
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 1rem;
+}
+
+.leaflet-popup.custom-popup .leaflet-popup-tip {
+  background: rgba(45, 55, 72, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.leaflet-popup.custom-popup .leaflet-popup-close-button {
+  color: #cbd5e0;
+  font-size: 18px;
+  font-weight: bold;
+  right: 8px;
+  top: 8px;
+}
+
+.popup-title {
+  font-weight: 600;
+  color: #667eea;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.3);
+  padding-bottom: 0.25rem;
+}
+
+.popup-item {
+  margin-bottom: 0.25rem;
+}
+
+.popup-label {
+  font-weight: 500;
+  color: #a0aec0;
+}
+
+.popup-value {
+  color: #e2e8f0;
+}
+
+/* Estilos de leyenda */
+.legend {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-family: 'Inter', sans-serif;
+}
+
+.legend-title {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  margin-right: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Spinner de carga */
+.loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 1.2rem;
+  z-index: 1002;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  from { 
+    transform: rotate(0deg); 
+  }
+  to { 
+    transform: rotate(360deg); 
+  }
+}
+
+/* Diseño responsive */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .controls-panel {
+    position: fixed;
+    top: auto;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    max-width: none;
+    max-height: 40vh;
+  }
+
+  .map-container {
+    margin: 0.5rem;
+    height: calc(100vh - 140px);
+  }
+}
+
+/* Estilos de scrollbar */
+.controls-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.controls-panel::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+}
+
+.controls-panel::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.3);
+  border-radius: 3px;
+}
+
+.controls-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.5);
+} 
