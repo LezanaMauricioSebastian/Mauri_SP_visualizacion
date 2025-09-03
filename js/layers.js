@@ -278,6 +278,22 @@ class LayerManager {
           <div class="legend-color" style="background:${COLOR_PALETTES.genero.sin_datos}"></div>
           Sin datos
         </div>`;
+        
+        // Agregar información adicional sobre la capa
+        const currentCity = this.mapManager.getCurrentCity();
+        if (currentCity === 'va') {
+          content += `<div style="margin-top:10px;padding:8px;background:#f8f9fa;border-radius:4px;font-size:0.8rem;color:#6c757d;">
+            <strong>Villa Ángela:</strong> Datos del Censo 2022 por radio censal
+          </div>`;
+        } else if (currentCity === 'sp') {
+          content += `<div style="margin-top:10px;padding:8px;background:#f8f9fa;border-radius:4px;font-size:0.8rem;color:#6c757d;">
+            <strong>Saenz Peña:</strong> Datos del Censo 2022 por radio censal
+          </div>`;
+        } else if (currentCity === 'gr') {
+          content += `<div style="margin-top:10px;padding:8px;background:#f8f9fa;border-radius:4px;font-size:0.8rem;color:#6c757d;">
+            <strong>Gran Resistencia:</strong> Datos del Censo 2022 por radio censal
+          </div>`;
+        }
       } else if (layerName === 'Barrios') {
         const nombres = new Set();
         this.loadedLayers[layerName].geojson.features.forEach(f => {
@@ -306,7 +322,7 @@ class LayerManager {
       } else if (layerName.includes('Circuito')) {
         const circuitos = new Set();
         this.loadedLayers[layerName].geojson.features.forEach(f => {
-          const circuito = f.properties && (f.properties.CIRC_ELECT || f.properties.circuito);
+          const circuito = f.properties && (f.properties.CIRC_ELECT || f.properties.circuito || f.properties.CIRC);
           if (circuito) circuitos.add(circuito);
         });
         Array.from(circuitos).slice(0, 8).forEach(circuito => {

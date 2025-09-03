@@ -38,7 +38,7 @@ const CITIES_CONFIG = {
       },
       'Mesas por Escuela': {
         file: 'mesas_electores_x_escuela_sp.geojson',
-        properties: ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN', 'CIRCUITO'],
+        properties: ['nombre', 'cn_mesas', 'electores', 'circuito'],
         icon: 'fas fa-school',
         group: 'Electoral',
         type: 'clustered',
@@ -46,7 +46,7 @@ const CITIES_CONFIG = {
       },
       'Electores por Escuela': {
         file: 'mesas_electores_x_escuela_sp.geojson',
-        properties: ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN', 'CIRCUITO'],
+        properties: ['nombre', 'cn_mesas', 'electores', 'circuito'],
         icon: 'fas fa-users',
         group: 'Electoral',
         type: 'clustered',
@@ -66,7 +66,7 @@ const CITIES_CONFIG = {
       },
       'Edificaciones': {
         file: 'Edificaciones_2024_Siluetas.geojson',
-        properties: ['area', 'area_in_meters', 'confindence', 'full_plus_code'],
+        properties: ['area', 'full_plus_code'],
         icon: 'fas fa-building',
         group: 'Infraestructura'
       }
@@ -86,13 +86,13 @@ const CITIES_CONFIG = {
       },
       'Barrios': {
         file: 'barrios_amgr.geojson',
-        properties: ['Barrio', 'Municipio'],
+        properties: ['Barrio','Municipio'],
         icon: 'fas fa-home',
         group: 'Divisiones'
       },
       'Asentamientos': {
         file: 'asentamientos_amgr.geojson',
-        properties: ['Barrios', 'Municipio'],
+        properties: ['Barrios','Municipio'],
         icon: 'fas fa-campground',
         group: 'Divisiones'
       },
@@ -108,15 +108,15 @@ const CITIES_CONFIG = {
         icon: 'fas fa-th',
         group: 'Divisiones'
       },
-      'Circuitos Electorales': {
+      'Circuito electoral': {
         file: 'circuitos_elect_amgr.geojson',
-        properties: ['circuito', 'cabecera', 'departamen'],
+        properties: ['circuito'],
         icon: 'fas fa-vote-yea',
         group: 'Electoral'
       },
               'Mesas por Escuela': {
           file: 'mesas_electores_x_escuelas_amgr.geojson',
-          properties: ['nombre', 'cn_mesas', 'electores', 'circuito', 'localidad'],
+          properties: ['nombre', 'cn_mesas', 'electores', 'circuito'],
           icon: 'fas fa-school',
           group: 'Electoral',
           type: 'clustered',
@@ -124,18 +124,96 @@ const CITIES_CONFIG = {
         },
         'Electores por Escuela': {
           file: 'mesas_electores_x_escuelas_amgr.geojson',
-          properties: ['nombre', 'cn_mesas', 'electores', 'circuito', 'localidad'],
+          properties: ['nombre', 'cn_mesas', 'electores', 'circuito'],
           icon: 'fas fa-users',
           group: 'Electoral',
           type: 'clustered',
           valueProperty: 'electores'
         },
+        'Radios Censales': {
+        file: 'poblac_viv_radio_22_amgr.geojson',
+        properties: ['LINK', 'AREA'],
+        icon: 'fas fa-chart-area',
+        group: 'Censo'
+      },
         'Población por Radio': {
           file: 'poblac_viv_radio_22_amgr.geojson',
           properties: ['AREA', 'LINK', '2022Total', '2022Mujere', '2022Varone', '2022Total_'],
           icon: 'fas fa-users',
           group: 'Censo'
         }
+    }
+  },
+  va: {
+    name: 'Villa Ángela',
+    center: [-27.5695, -60.7157],
+    zoom: 13,
+    dataPath: 'datos/villa_angela/',
+    layers: {
+      'Calles': {
+        file: 'calles_2024_va.geojson',
+        properties: ['name', 'superclas'],
+        icon: 'fas fa-road',
+        group: 'Infraestructura'
+      },
+      'Asentamientos': {
+        file: 'asentamientos_va.geojson',
+        properties: ['nombre_bar', 'municipio'],
+        icon: 'fas fa-campground',
+        group: 'Divisiones'
+      },
+      'Lugares públicos': {
+        file: 'lugares_publicos_va.geojson',
+        properties: ['leisure', 'name'],
+        icon: 'fas fa-tree',
+        group: 'Servicios'
+      },
+      'Manzanas': {
+        file: 'mzas_poly_22_va.geojson',
+        properties: ['LENGTH'],
+        icon: 'fas fa-th',
+        group: 'Divisiones'
+      },
+      'Circuito electoral': {
+        file: 'circuitos_electoral_va.geojson',
+        properties: ['CIRC'],
+        icon: 'fas fa-vote-yea',
+        group: 'Electoral'
+      },
+      'Mesas por Escuela': {
+        file: 'mesas_electores_x_escuela_va.geojson',
+        properties: ['nombre', 'CuentaDeNU', 'SumaDeCuen', 'circuito'],
+        icon: 'fas fa-school',
+        group: 'Electoral',
+        type: 'clustered',
+        valueProperty: 'CuentaDeNU'
+      },
+      'Electores por Escuela': {
+        file: 'mesas_electores_x_escuela_va.geojson',
+        properties: ['nombre', 'CuentaDeNU', 'SumaDeCuen', 'circuito'],
+        icon: 'fas fa-users',
+        group: 'Electoral',
+        type: 'clustered',
+        valueProperty: 'SumaDeCuen'
+      },
+      'Radios Censales': {
+        file: 'radios_censo_va.geojson',
+        properties: ['LINK', 'AREA'],
+        icon: 'fas fa-chart-area',
+        group: 'Censo'
+      },
+      'Población por Radio': {
+        file: 'radios_censo_va.geojson',
+        properties: ['AREA', 'LINK', '2022Total', '2022Mujere', '2022Varone','2022Total_'],
+        icon: 'fas fa-users',
+        group: 'Censo'
+      },
+      'Edificaciones': {
+        file: 'Edificaciones_2024_Siluetas_va.geojson',
+        properties: [ 'area_in_me', 'full_plus_'],
+        icon: 'fas fa-building',
+        group: 'Infraestructura'
+      }
     }
   }
 };
@@ -161,11 +239,16 @@ const COLOR_PALETTES = {
   ],
   asentamientos: [
     '#8e44ad', '#e74c3c', '#f39c12', '#27ae60', '#3498db', '#e67e22',
-    '#9b59b6', '#1abc9c', '#34495e', '#f1c40f', '#e8b339', '#c0392b'
+    '#9b59b6', '#1abc9c', '#34495e', '#f1c40f', '#e8b39', '#c0392b'
   ],
   calles: {
     'pavimentado': '#2196F3',
-    'no pavimento': '#FF5722'
+    'no pavimento': '#FF5722',
+    'paved': '#2196F3',
+    'unpaved': '#FF5722',
+    'secondary': '#1976D2',
+    'primary': '#0D47A1',
+    'residential': '#42A5F5'
   },
   genero: {
     'mas_hombres': '#64B5F6',    // Azul claro
@@ -177,10 +260,50 @@ const COLOR_PALETTES = {
 
 // Traducciones para popups
 const TRANSLATIONS = {
-  'Calles': { 'superclas': 'Tipo', 'name': 'Nombre' },
+  'Calles': { 
+    'superclas': 'Tipo', 
+    'name': 'Nombre',
+    'highway': 'Tipo de vía',
+    'surface': 'Superficie',
+    'id': 'ID',
+    '@id': 'ID OSM',
+    'alt_name': 'Nombre alternativo',
+    'noname': 'Sin nombre',
+    'official_n': 'Nombre oficial'
+  },
   'Lugares públicos': { 'leisure': 'Tipo', 'name': 'Nombre' },
   'Barrios': { 'Barrio': 'Barrio', 'Municipio': 'Municipio', 'nombre': 'Nombre' },
-  'Asentamientos': { 'Barrios': 'Asentamiento', 'Municipio': 'Municipio' },
+  'Asentamientos': { 
+    'Barrios': 'Asentamiento', 
+    'Municipio': 'Municipio',
+    'nombre_bar': 'Asentamiento',
+    'provincia': 'Provincia',
+    'departamen': 'Departamento',
+    'localidad': 'Localidad',
+    'cantidad_f': 'Mujeres',
+    'cantidad_v': 'Varones',
+    'decada_de_': 'Década de creación',
+    'energia_el': 'Energía eléctrica',
+    'agua_corri': 'Agua corriente',
+    'superficie': 'Superficie (m²)',
+    'renabap_id': 'ID RENABAP',
+    'anio_de_cr': 'Año de creación',
+    'efluentes_': 'Efluentes',
+    'cocina': 'Cocina',
+    'calefaccio': 'Calefacción',
+    'situacion_': 'Situación de tenencia',
+    'clasificac': 'Clasificación'
+  },
+  'Manzanas': {
+    'AREA': 'Área',
+    'M0080_': 'ID Manzana',
+    'LENGTH': 'Longitud (m)',
+    'FNODE_': 'Nodo Inicial',
+    'TNODE_': 'Nodo Final',
+    'LPOLY_': 'Polígono Izquierdo',
+    'RPOLY_': 'Polígono Derecho',
+    'M0080_ID': 'ID Manzana'
+  },
   'Población por Radio': {
     'Datos x ra': 'Población total',
     'Datos x _1': 'Mujeres',
@@ -192,7 +315,20 @@ const TRANSLATIONS = {
     '2022Total': 'Población total',
     '2022Mujere': 'Mujeres',
     '2022Varone': 'Varones',
-    '2022Total_': 'Viviendas'
+    '2022Total': 'Total',
+    '2022Total_': 'Viviendas',
+    '2022Casa': 'Casas',
+    '2022Rancho': 'Ranchos',
+    '2022Casill': 'Casillas',
+    '2022Depa_1': 'Departamentos',
+    '2022Pieza': 'Piezas',
+    '2022Local': 'Locales',
+    '2022Vivien': 'Viviendas',
+    'ArcIds': 'IDs de Arco',
+    'PERIMETER': 'Perímetro',
+    'TIPO': 'Tipo',
+    'Link2': 'Link 2',
+    'layer': 'Capa'
   },
   'Radios Censales': { 'LINK': 'Radio' },
   'Mesas por Escuela': {
@@ -204,7 +340,17 @@ const TRANSLATIONS = {
     'cn_mesas': 'Mesas',
     'electores': 'Electores',
     'circuito': 'Circuito',
-    'localidad': 'Localidad'
+    'localidad': 'Localidad',
+    'CuentaDeNU': 'Mesas',
+    'SumaDeCuen': 'Electores',
+    'domicilio': 'Domicilio',
+    'telefono': 'Teléfono',
+    'email': 'Email',
+    'gid': 'ID',
+    'cueanexo': 'CUE/Anexo',
+    'provincia': 'Provincia',
+    'departamen': 'Departamento',
+    'cod_postal': 'Código Postal'
   },
   'Electores por Escuela': {
     'NOMBRE_ESC': 'Escuela',
@@ -215,13 +361,32 @@ const TRANSLATIONS = {
     'cn_mesas': 'Mesas',
     'electores': 'Electores',
     'circuito': 'Circuito',
-    'localidad': 'Localidad'
+    'localidad': 'Localidad',
+    'CuentaDeNU': 'Mesas',
+    'SumaDeCuen': 'Electores',
+    'domicilio': 'Domicilio',
+    'telefono': 'Teléfono',
+    'email': 'Email',
+    'gid': 'ID',
+    'cueanexo': 'CUE/Anexo',
+    'provincia': 'Provincia',
+    'departamen': 'Departamento',
+    'cod_postal': 'Código Postal'
   },
-  'Circuito electoral': { 'CIRC_ELECT': 'Circuito Electoral' },
+  'Circuito electoral': { 'CIRC_ELECT': 'Circuito Electoral','CIRC': 'Circuito','circuito': 'Circuito' },
   'Circuitos Electorales': { 
     'circuito': 'Circuito', 
     'cabecera': 'Cabecera', 
     'departamen': 'Departamento',
-    'CIRC_ELECT': 'Circuito Electoral' 
+    'CIRC_ELECT': 'Circuito Electoral',
+    'CIRC': 'Circuito',
+    'PROVINCIA': 'Provincia',
+    'DEPARTAMEN': 'Departamento',
+    'CIRCUITO': 'Circuito',
+    'MUNICIPIO': 'Municipio',
+    'ID': 'ID',
+    'INDRA': 'Código INDRA',
+    'PROV': 'Código Provincia',
+    'DEPTO': 'Código Departamento'
   }
-}; 
+};
