@@ -26,7 +26,7 @@ const CITIES_CONFIG = {
       },
       'Manzanas': {
         file: 'mzas_poly_22_sp.geojson',
-        properties: ['AREA'],
+        properties: ['DFRM','AREA'],
         icon: 'fas fa-th',
         group: 'Divisiones'
       },
@@ -104,7 +104,7 @@ const CITIES_CONFIG = {
       },
       'Manzanas': {
         file: 'manzanero_amgr.geojson',
-        properties: ['AREA'],
+        properties: ['PDLFRM','AREA'],
         icon: 'fas fa-th',
         group: 'Divisiones'
       },
@@ -263,14 +263,7 @@ const TRANSLATIONS = {
   'Calles': { 
     'super_class': 'Tipo',
     'superclas': 'Tipo', 
-    'name': 'Nombre',
-    'highway': 'Tipo de vía',
-    'surface': 'Superficie',
-    'id': 'ID',
-    '@id': 'ID OSM',
-    'alt_name': 'Nombre alternativo',
-    'noname': 'Sin nombre',
-    'official_n': 'Nombre oficial'
+
   },
   'Lugares públicos': { 'leisure': 'Tipo', 'name': 'Nombre' },
   'Barrios': { 'Barrio': 'Barrio', 'Municipio': 'Municipio', 'nombre': 'Nombre' },
