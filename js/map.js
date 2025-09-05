@@ -157,7 +157,7 @@ class MapUtils {
       if (layerName === 'Lugares públicos' && prop === 'name' && (!value || value === "")) {
         value = "Plaza";
       }
-      if (layerName === 'Calles' && prop === 'superclas' && value === 'desconocido') {
+      if (layerName === 'Calles' && prop === 'superclas'  && value === 'desconocido') {
         value = "No pavimento";
       }
       
@@ -180,15 +180,16 @@ class MapUtils {
   // Obtener estilo para diferentes tipos de capas
   static getLayerStyle(feature, layerName) {
     if (layerName === "Calles") {
-      let tipo = feature.properties.superclas || feature.properties.surface || feature.properties.highway;
-      
+      let tipo = feature.properties.superclas  || feature.properties.surface || feature.properties.highway;
+
       // Mejorar la lógica para detectar pavimentación
       let clasificacion = "no pavimento"; // valor por defecto
       
       if (tipo) {
         // Verificar si está pavimentado
         if (tipo === "paved" || 
-            tipo === "pavimentado" || 
+            tipo === "pavimentado" ||
+            tipo === "Pavimentado" ||
             tipo === "asphalt" || 
             tipo === "concrete" ||
             tipo === "primary" ||

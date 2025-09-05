@@ -7,7 +7,7 @@ const CITIES_CONFIG = {
     dataPath: 'datos/SP/',
     layers: {
       'Calles': {
-        file: 'calles_2024_sp.geojson',
+        file: 'calles_2024_sp_corregido.geojson',
         properties: ['name', 'superclas'],
         icon: 'fas fa-road',
         group: 'Infraestructura'
@@ -169,8 +169,8 @@ const CITIES_CONFIG = {
         group: 'Servicios'
       },
       'Manzanas': {
-        file: 'mzas_poly_22_va.geojson',
-        properties: ['LENGTH'],
+        file: 'mzas_poligonos_22_va.geojson',
+        properties: ['DFRM','AREA'],
         icon: 'fas fa-th',
         group: 'Divisiones'
       },
@@ -261,6 +261,7 @@ const COLOR_PALETTES = {
 // Traducciones para popups
 const TRANSLATIONS = {
   'Calles': { 
+    'super_class': 'Tipo',
     'superclas': 'Tipo', 
     'name': 'Nombre',
     'highway': 'Tipo de vía',
