@@ -24,6 +24,18 @@ const CITIES_CONFIG = {
         icon: 'fas fa-tree',
         group: 'Servicios'
       },
+      'Escuelas':{
+        file: 'escuelas_sp_completo.geojson',
+        properties: ['nombre', 'domicilio', 'sector', 'nvcjinfantes', 'nvcprimario', 'nvcsecundario'],
+        icon: 'fas fa-school',
+        group: 'Infraestructura'
+      },
+      'Comisarias':{
+        file: 'policia_comisarias_sp.geojson',
+        properties: ['Unidad', 'Direccion', 'Coordenada', 'correo ele', 'telefono'],
+        icon: 'fas fa-user-shield',
+        group: 'Infraestructura'
+      },
       'Manzanas': {
         file: 'mzas_poly_22_sp.geojson',
         properties: ['DFRM','AREA'],
@@ -255,6 +267,15 @@ const COLOR_PALETTES = {
     'mas_mujeres': '#F48FB1',    // Rosa claro
     'equilibrado': '#A5D6A7',    // Verde claro
     'sin_datos': '#E0E0E0'       // Gris claro
+  },
+  escuelas: {
+    'solo_infantes': '#FFB74D',      // Naranja - Solo jardín
+    'solo_primario': '#4CAF50',      // Verde - Solo primario
+    'solo_secundario': '#2196F3',    // Azul - Solo secundario
+    'infantes_primario': '#8BC34A',  // Verde claro - Jardín + Primario
+    'primario_secundario': '#00BCD4', // Cian - Primario + Secundario
+    'todos_niveles': '#9C27B0',      // Púrpura - Todos los niveles
+    'sin_niveles': '#E0E0E0'         // Gris - Sin niveles definidos
   }
 };
 
@@ -266,6 +287,14 @@ const TRANSLATIONS = {
 
   },
   'Lugares públicos': { 'leisure': 'Tipo', 'name': 'Nombre' },
+  'Escuelas': { 
+    'nombre': 'Nombre', 
+    'domicilio': 'Domicilio', 
+    'sector': 'Sector',
+    'nvcjinfantes': 'Jardín de Infantes',
+    'nvcprimario': 'Primario',
+    'nvcsecundario': 'Secundario'
+  },
   'Barrios': { 'Barrio': 'Barrio', 'Municipio': 'Municipio', 'nombre': 'Nombre' },
   'Asentamientos': { 
     'Barrios': 'Asentamiento', 

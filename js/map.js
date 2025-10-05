@@ -149,6 +149,76 @@ class MapUtils {
       });
     }
     
+    // Manejo especial para capa de escuelas
+    if (layerName === 'Escuelas') {
+      const infantes = Number(feature.properties.nvcjinfantes) || 0;
+      const primario = Number(feature.properties.nvcprimario) || 0;
+      const secundario = Number(feature.properties.nvcsecundario) || 0;
+      
+      // Información básica
+      content += `<div class="popup-item">
+        <span class="popup-label">Nombre:</span> 
+        <span class="popup-value">${feature.properties.nombre || 'Sin nombre'}</span>
+      </div>`;
+      
+      if (feature.properties.domicilio) {
+        content += `<div class="popup-item">
+          <span class="popup-label">Domicilio:</span> 
+          <span class="popup-value">${feature.properties.domicilio}</span>
+        </div>`;
+      }
+      
+      if (feature.properties.sector) {
+        content += `<div class="popup-item">
+          <span class="popup-label">Sector:</span> 
+          <span class="popup-value">${feature.properties.sector}</span>
+        </div>`;
+      }
+      
+      // Niveles educativos
+      content += `<div class="popup-item">
+        <span class="popup-label">Niveles educativos:</span> 
+        <span class="popup-value"></span>
+      </div>`;
+      
+      if (infantes) {
+        content += `<div class="popup-item" style="margin-left: 15px;">
+          <span class="popup-label">🏫 Jardín de Infantes</span> 
+        </div>`;
+      }
+      
+      if (primario) {
+        content += `<div class="popup-item" style="margin-left: 15px;">
+          <span class="popup-label">📚 Primario</span> 
+        </div>`;
+      }
+      
+      if (secundario) {
+        content += `<div class="popup-item" style="margin-left: 15px;">
+          <span class="popup-label">🎓 Secundario</span> 
+        </div>`;
+      }
+      
+      if (!infantes && !primario && !secundario) {
+        content += `<div class="popup-item" style="margin-left: 15px;">
+          <span class="popup-value" style="color: #999;">Sin niveles definidos</span>
+        </div>`;
+      }
+      
+      // CUE/Anexo si está disponible
+      if (feature.properties.cueanexo) {
+        content += `<div class="popup-item">
+          <span class="popup-label">CUE/Anexo:</span> 
+          <span class="popup-value">${feature.properties.cueanexo}</span>
+        </div>`;
+      }
+      
+      return layer.bindPopup(content, {
+        className: 'custom-popup',
+        maxWidth: 350
+      });
+    }
+    
     // Para otras capas, usar el comportamiento estándar
     properties.forEach(prop => {
       let value = feature.properties[prop];
@@ -296,6 +366,37 @@ class MapUtils {
         weight: 2,
         fillOpacity: 0.4,
         opacity: 0.8
+      };
+    } else if (layerName === 'Escuelas') {
+      // Lógica especial para escuelas basada en niveles educativos
+      const infantes = Number(feature.properties.nvcjinfantes) || 0;
+      const primario = Number(feature.properties.nvcprimario) || 0;
+      const secundario = Number(feature.properties.nvcsecundario) || 0;
+      
+      let color = COLOR_PALETTES.escuelas.sin_niveles;
+      
+      // Determinar el tipo de escuela basado en los niveles
+      if (infantes && primario && secundario) {
+        color = COLOR_PALETTES.escuelas.todos_niveles;
+      } else if (primario && secundario) {
+        color = COLOR_PALETTES.escuelas.primario_secundario;
+      } else if (infantes && primario) {
+        color = COLOR_PALETTES.escuelas.infantes_primario;
+      } else if (secundario) {
+        color = COLOR_PALETTES.escuelas.solo_secundario;
+      } else if (primario) {
+        color = COLOR_PALETTES.escuelas.solo_primario;
+      } else if (infantes) {
+        color = COLOR_PALETTES.escuelas.solo_infantes;
+      }
+      
+      return {
+        color: color,
+        fillColor: color,
+        weight: 2,
+        fillOpacity: 0.7,
+        opacity: 0.9,
+        radius: 8
       };
     }
     

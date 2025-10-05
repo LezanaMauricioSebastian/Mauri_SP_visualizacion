@@ -124,6 +124,64 @@ class LayerManager {
     return clusterGroup;
   }
 
+  // Crear capa de escuelas con círculos coloreados
+  createSchoolLayer(geojson, layerConfig, layerName) {
+    const schoolLayer = L.layerGroup();
+    
+    geojson.features.forEach(feature => {
+      try {
+        let coords;
+        
+        // Manejar diferentes tipos de geometría
+        if (feature.geometry.type === 'Point') {
+          coords = feature.geometry.coordinates;
+        } else if (feature.geometry.type === 'MultiPoint') {
+          // Para MultiPoint, usar el primer punto
+          coords = feature.geometry.coordinates[0];
+        } else {
+          console.warn('Tipo de geometría no soportado para escuelas:', feature.geometry.type);
+          return;
+        }
+        
+        // Validar coordenadas
+        if (!coords || coords.length < 2 || typeof coords[0] !== 'number' || typeof coords[1] !== 'number') {
+          console.warn('Coordenadas inválidas para escuela:', coords);
+          return;
+        }
+        
+        const lat = parseFloat(coords[1]);
+        const lng = parseFloat(coords[0]);
+        
+        if (isNaN(lat) || isNaN(lng) || !isFinite(lat) || !isFinite(lng)) {
+          console.warn('Coordenadas no numéricas para escuela:', { lat, lng });
+          return;
+        }
+        
+        // Obtener estilo para la escuela
+        const style = MapUtils.getLayerStyle(feature, layerName);
+        
+        // Crear círculo coloreado
+        const circle = L.circleMarker([lat, lng], {
+          radius: style.radius || 8,
+          fillColor: style.fillColor,
+          color: style.color,
+          weight: style.weight || 2,
+          opacity: style.opacity || 0.9,
+          fillOpacity: style.fillOpacity || 0.7
+        });
+        
+        // Agregar popup
+        MapUtils.createCustomPopup(feature, circle, layerConfig.properties, layerName, this.mapManager.getCurrentCity());
+        
+        schoolLayer.addLayer(circle);
+      } catch (error) {
+        console.warn('Error procesando escuela:', error, feature);
+      }
+    });
+    
+    return schoolLayer;
+  }
+
   // Crear capa estándar
   createStandardLayer(geojson, layerConfig, layerName) {
     return L.geoJSON(geojson, {
@@ -198,6 +256,8 @@ class LayerManager {
       let layer;
       if (layerConfig.type === 'clustered') {
         layer = this.createClusteredLayer(geojson, layerConfig, layerName);
+      } else if (layerName === 'Escuelas') {
+        layer = this.createSchoolLayer(geojson, layerConfig, layerName);
       } else {
         layer = this.createStandardLayer(geojson, layerConfig, layerName);
       }
@@ -332,6 +392,40 @@ class LayerManager {
           </div>`;
         });
         if (circuitos.size > 8) content += '<div style="text-align:center;color:#718096;font-size:0.75rem;">...</div>';
+      } else if (layerName === 'Escuelas') {
+        content += `<div class="legend-item">
+          <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.todos_niveles};border-radius:50%;width:12px;height:12px;"></div>
+          Todos los niveles
+        </div>`;
+        content += `<div class="legend-item">
+          <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.primario_secundario};border-radius:50%;width:12px;height:12px;"></div>
+          Primario + Secundario
+        </div>`;
+        content += `<div class="legend-item">
+          <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.infantes_primario};border-radius:50%;width:12px;height:12px;"></div>
+          Jardín + Primario
+        </div>`;
+        content += `<div class="legend-item">
+          <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.solo_secundario};border-radius:50%;width:12px;height:12px;"></div>
+          Solo Secundario
+        </div>`;
+        content += `<div class="legend-item">
+          <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.solo_primario};border-radius:50%;width:12px;height:12px;"></div>
+          Solo Primario
+        </div>`;
+        content += `<div class="legend-item">
+          <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.solo_infantes};border-radius:50%;width:12px;height:12px;"></div>
+          Solo Jardín
+        </div>`;
+        content += `<div class="legend-item">
+          <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.sin_niveles};border-radius:50%;width:12px;height:12px;"></div>
+          Sin niveles definidos
+        </div>`;
+        
+        // Agregar información adicional sobre la capa
+        content += `<div style="margin-top:10px;padding:8px;background:#f8f9fa;border-radius:4px;font-size:0.8rem;color:#6c757d;">
+          <strong>Escuelas:</strong> Clasificación por niveles educativos
+        </div>`;
       }
       
       div.innerHTML = content;
