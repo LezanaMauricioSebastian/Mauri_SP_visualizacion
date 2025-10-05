@@ -38,7 +38,7 @@ const CITIES_CONFIG = {
       },
       'Mesas por Escuela': {
         file: 'mesas_electores_x_escuela_sp.geojson',
-        properties: ['nombre', 'cn_mesas', 'electores', 'circuito'],
+        properties: ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN', 'CIRCUITO'],
         icon: 'fas fa-school',
         group: 'Electoral',
         type: 'clustered',
@@ -46,7 +46,7 @@ const CITIES_CONFIG = {
       },
       'Electores por Escuela': {
         file: 'mesas_electores_x_escuela_sp.geojson',
-        properties: ['nombre', 'cn_mesas', 'electores', 'circuito'],
+        properties: ['NOMBRE_ESC', 'CUENTADENU', 'SUMADECUEN', 'CIRCUITO'],
         icon: 'fas fa-users',
         group: 'Electoral',
         type: 'clustered',
