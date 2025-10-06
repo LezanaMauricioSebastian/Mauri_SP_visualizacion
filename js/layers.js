@@ -4,6 +4,12 @@ class LayerManager {
     this.mapManager = mapManager;
     this.loadedLayers = {};
     this.currentLegend = null;
+    this.countingCalculated = false;
+    this.countingCache = {
+      schools: null,
+      police: null,
+      blocks: null
+    };
   }
 
   // Crear marcador clusterizado
@@ -278,13 +284,6 @@ class LayerManager {
   // Añadir capa al mapa
   addLayerToMap(layerName) {
     if (this.loadedLayers[layerName]) {
-      // Debug para capas ocultas
-      if (this.loadedLayers[layerName].config.hidden) {
-        console.log(`🚫 Capa ${layerName} está oculta - NO se agregará al mapa`);
-        return;
-      }
-      
-      // Solo agregar al mapa si la capa no está oculta
       this.loadedLayers[layerName].layer.addTo(this.mapManager.getMap());
       this.updateLegend(layerName);
       
@@ -293,9 +292,12 @@ class LayerManager {
         this.loadCountingLayers();
       }
       
-      // Si se agrega la capa de escuelas, comisarías o manzanas, actualizar estilos de barrios
-      if ((layerName === 'Escuelas' || layerName === 'Comisarias' || layerName === 'Manzanas' || layerName === 'Manzanas_Puntos') && this.loadedLayers['Barrios']) {
-        this.refreshBarriosLayer();
+      // Solo refrescar Barrios si es necesario (cuando se activa una capa de conteo y Barrios está visible)
+      if ((layerName === 'Escuelas' || layerName === 'Comisarias') && this.loadedLayers['Barrios'] && this.mapManager.getMap().hasLayer(this.loadedLayers['Barrios'].layer)) {
+        // Solo refrescar si ya se calculó el conteo inicial (para evitar recálculos innecesarios)
+        if (this.countingCalculated) {
+          this.refreshBarriosLayer();
+        }
       }
     }
   }
@@ -308,6 +310,13 @@ class LayerManager {
       
       // Solo refrescar si la capa de Barrios ya está visible en el mapa
       if (map.hasLayer(barriosLayer.layer)) {
+        // Limpiar caché antes de refrescar
+        this.countingCache = {
+          schools: null,
+          police: null,
+          blocks: null
+        };
+        
         // Remover la capa actual
         map.removeLayer(barriosLayer.layer);
         
@@ -335,11 +344,21 @@ class LayerManager {
       // Si se remueve la capa de Barrios, remover también las capas de conteo
       if (layerName === 'Barrios') {
         this.unloadCountingLayers();
+        this.countingCalculated = false; // Resetear para permitir recálculo la próxima vez
+        // Limpiar caché
+        this.countingCache = {
+          schools: null,
+          police: null,
+          blocks: null
+        };
       }
       
       // Si se remueve la capa de escuelas, comisarías o manzanas, actualizar estilos de barrios
-      if ((layerName === 'Escuelas' || layerName === 'Comisarias' || layerName === 'Manzanas' || layerName === 'Manzanas_Puntos') && this.loadedLayers['Barrios']) {
-        this.refreshBarriosLayer();
+      if ((layerName === 'Escuelas' || layerName === 'Comisarias' || layerName === 'Manzanas' || layerName === 'Manzanas_Puntos') && this.loadedLayers['Barrios'] && this.mapManager.getMap().hasLayer(this.loadedLayers['Barrios'].layer)) {
+        // Solo refrescar si ya se calculó el conteo inicial (para evitar recálculos innecesarios)
+        if (this.countingCalculated) {
+          this.refreshBarriosLayer();
+        }
       }
     }
   }
@@ -348,10 +367,9 @@ class LayerManager {
   async loadCountingLayers() {
     const currentCity = this.mapManager.getCurrentCity();
     const cityConfig = CITIES_CONFIG[currentCity];
-    const layersToLoad = ['Manzanas_Puntos', 'Escuelas', 'Comisarias'];
+    const layersToLoad = ['Manzanas_Puntos'];
     
     console.log('🔄 Cargando capas automáticamente para conteo...');
-    
     for (const layerName of layersToLoad) {
       if (cityConfig.layers[layerName] && !this.loadedLayers[layerName]) {
         try {
@@ -368,13 +386,15 @@ class LayerManager {
           console.warn(`⚠️ Error cargando ${layerName}:`, error);
         }
       }
-    }
-    
+    }    
     // Asegurarse de que las capas ocultas no estén visibles
     this.hideHiddenLayers();
     
     // Refrescar barrios para actualizar contadores
-    this.refreshBarriosLayer();
+    if (!this.countingCalculated) {
+      this.refreshBarriosLayer();
+      this.countingCalculated = true;
+    }
   }
 
   // Descargar las capas de conteo
@@ -571,6 +591,12 @@ class LayerManager {
 
   // Contar manzanas por barrio usando intersección punto-dentro-de-polígono
   countBlocksPerNeighborhood() {
+    // Verificar caché primero
+    if (this.countingCache.blocks) {
+      console.log('🏘️ Usando caché para manzanas');
+      return this.countingCache.blocks;
+    }
+
     const blocksLayer = this.loadedLayers['Manzanas_Puntos'];
     const neighborhoodsLayer = this.loadedLayers['Barrios'];
     
@@ -631,12 +657,6 @@ class LayerManager {
             if (this.isPointInPolygon(blockLatLng, polygonCoords)) {
               assignedNeighborhood = neighborhoodName;
               
-              // Debug para las primeras 5 manzanas
-              if (blocksProcessed <= 5) {
-                console.log(`🏘️ Manzana "${block.properties.DFRM || 'Sin ID'}" está DENTRO del barrio "${neighborhoodName}"`);
-                console.log(`   Coordenadas manzana: [${blockLatLng[0]}, ${blockLatLng[1]}]`);
-                console.log(`   Primeras 3 coordenadas barrio:`, polygonCoords.slice(0, 3));
-              }
             }
           }
         });
@@ -644,24 +664,27 @@ class LayerManager {
         if (assignedNeighborhood) {
           blockCounts[assignedNeighborhood]++;
           blocksAssigned++;
-        } else {
-          if (blocksProcessed <= 5) {
-            console.log(`❌ Manzana "${block.properties.DFRM || 'Sin ID'}" no está dentro de ningún barrio`);
-            console.log(`   Coordenadas manzana: [${blockLatLng[0]}, ${blockLatLng[1]}]`);
-            console.log(`   Propiedades manzana:`, block.properties);
-          }
-        }
+        } 
       }
     });
     
     console.log(`📊 Resultado: ${blocksProcessed} manzanas procesadas, ${blocksAssigned} asignadas a barrios`);
     console.log('📈 Conteo de manzanas por barrio:', blockCounts);
     
+    // Guardar en caché
+    this.countingCache.blocks = blockCounts;
+    
     return blockCounts;
   }
 
   // Contar comisarías por barrio usando intersección punto-dentro-de-polígono
   countPoliceStationsPerNeighborhood() {
+    // Verificar caché primero
+    if (this.countingCache.police) {
+      console.log('🚔 Usando caché para comisarías');
+      return this.countingCache.police;
+    }
+
     const policeLayer = this.loadedLayers['Comisarias'];
     const neighborhoodsLayer = this.loadedLayers['Barrios'];
     
@@ -735,11 +758,20 @@ class LayerManager {
     console.log(`📊 Resultado: ${stationsProcessed} comisarías procesadas, ${stationsAssigned} asignadas a barrios`);
     console.log('📈 Conteo de comisarías por barrio:', policeCounts);
     
+    // Guardar en caché
+    this.countingCache.police = policeCounts;
+    
     return policeCounts;
   }
 
   // Contar escuelas por barrio usando el barrio más cercano
   countSchoolsPerNeighborhood() {
+    // Verificar caché primero
+    if (this.countingCache.schools) {
+      console.log('📚 Usando caché para escuelas');
+      return this.countingCache.schools;
+    }
+
     const schoolsLayer = this.loadedLayers['Escuelas'];
     const neighborhoodsLayer = this.loadedLayers['Barrios'];
     
@@ -905,6 +937,9 @@ class LayerManager {
         console.log(`   ${name}: ${count} escuelas`);
       });
     }
+    
+    // Guardar en caché
+    this.countingCache.schools = schoolCounts;
     
     return schoolCounts;
   }
