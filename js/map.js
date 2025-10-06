@@ -278,6 +278,14 @@ class MapUtils {
           <span class="popup-value">${policeCount}</span>
         </div>`;
       }
+      
+      if (feature.properties.blockCount !== undefined) {
+        const blockCount = feature.properties.blockCount;
+        content += `<div class="popup-item">
+          <span class="popup-label">🏘️ Manzanas en el barrio:</span> 
+          <span class="popup-value">${blockCount}</span>
+        </div>`;
+      }
     }
     
     // Para otras capas, usar el comportamiento estándar
@@ -411,10 +419,17 @@ class MapUtils {
       const layerManager = window.layerManager; // Acceso global al layer manager
       let schoolCount = 0;
       
+      console.log('🔍 Debug barrio:', nombreBarrio, 'layerManager:', !!layerManager);
+      if (layerManager) {
+        console.log('📋 Capas cargadas:', Object.keys(layerManager.getLoadedLayers()));
+      }
+      
       if (layerManager && layerManager.getLoadedLayers()['Escuelas']) {
+        console.log('📚 Contando escuelas para barrio:', nombreBarrio);
         const schoolCounts = layerManager.countSchoolsPerNeighborhood();
         if (schoolCounts) {
           schoolCount = schoolCounts[nombreBarrio] || 0;
+          console.log('📚 Escuelas encontradas:', schoolCount);
         }
       }
       
@@ -427,9 +442,23 @@ class MapUtils {
         }
       }
       
+      // Contar manzanas (siempre disponible cuando se activa Barrios)
+      let blockCount = 0;
+      if (layerManager && layerManager.getLoadedLayers()['Manzanas_Puntos']) {
+        console.log('🏘️ Contando manzanas para barrio:', nombreBarrio);
+        const blockCounts = layerManager.countBlocksPerNeighborhood();
+        if (blockCounts) {
+          blockCount = blockCounts[nombreBarrio] || 0;
+          console.log('🏘️ Manzanas encontradas:', blockCount);
+        }
+      } else {
+        console.log('🏘️ Capa de Manzanas_Puntos no cargada');
+      }
+      
       // Agregar los contadores como propiedades del feature
       feature.properties.schoolCount = schoolCount;
       feature.properties.policeCount = policeCount;
+      feature.properties.blockCount = blockCount;
       
       return {
         color: MapUtils.getColorByHash(nombreBarrio, COLOR_PALETTES.barrios),

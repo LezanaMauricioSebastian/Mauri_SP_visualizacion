@@ -42,6 +42,13 @@ const CITIES_CONFIG = {
         icon: 'fas fa-th',
         group: 'Divisiones'
       },
+      'Manzanas_Puntos': {
+        file: 'mzas_point_22_sp.geojson',
+        properties: ['DFRM','AREA'],
+        icon: 'fas fa-circle',
+        group: 'Divisiones',
+        hidden: true  // Ocultar de la interfaz pero mantener para conteo
+      },
       'Circuito electoral': {
         file: 'circuilto_elect_sp.geojson',
         properties: ['CIRC_ELECT'],

@@ -278,11 +278,23 @@ class LayerManager {
   // Añadir capa al mapa
   addLayerToMap(layerName) {
     if (this.loadedLayers[layerName]) {
+      // Debug para capas ocultas
+      if (this.loadedLayers[layerName].config.hidden) {
+        console.log(`🚫 Capa ${layerName} está oculta - NO se agregará al mapa`);
+        return;
+      }
+      
+      // Solo agregar al mapa si la capa no está oculta
       this.loadedLayers[layerName].layer.addTo(this.mapManager.getMap());
       this.updateLegend(layerName);
       
-      // Si se agrega la capa de escuelas o comisarías, actualizar estilos de barrios
-      if ((layerName === 'Escuelas' || layerName === 'Comisarias') && this.loadedLayers['Barrios']) {
+      // Si se agrega la capa de Barrios, cargar automáticamente las capas necesarias para conteo
+      if (layerName === 'Barrios') {
+        this.loadCountingLayers();
+      }
+      
+      // Si se agrega la capa de escuelas, comisarías o manzanas, actualizar estilos de barrios
+      if ((layerName === 'Escuelas' || layerName === 'Comisarias' || layerName === 'Manzanas' || layerName === 'Manzanas_Puntos') && this.loadedLayers['Barrios']) {
         this.refreshBarriosLayer();
       }
     }
@@ -314,14 +326,84 @@ class LayerManager {
   // Remover capa del mapa
   removeLayerFromMap(layerName) {
     if (this.loadedLayers[layerName]) {
-      this.mapManager.getMap().removeLayer(this.loadedLayers[layerName].layer);
-      this.removeLegend();
+      // Solo remover del mapa si la capa no está oculta y está visible
+      if (!this.loadedLayers[layerName].config.hidden && this.mapManager.getMap().hasLayer(this.loadedLayers[layerName].layer)) {
+        this.mapManager.getMap().removeLayer(this.loadedLayers[layerName].layer);
+        this.removeLegend();
+      }
       
-      // Si se remueve la capa de escuelas o comisarías, actualizar estilos de barrios
-      if ((layerName === 'Escuelas' || layerName === 'Comisarias') && this.loadedLayers['Barrios']) {
+      // Si se remueve la capa de Barrios, remover también las capas de conteo
+      if (layerName === 'Barrios') {
+        this.unloadCountingLayers();
+      }
+      
+      // Si se remueve la capa de escuelas, comisarías o manzanas, actualizar estilos de barrios
+      if ((layerName === 'Escuelas' || layerName === 'Comisarias' || layerName === 'Manzanas' || layerName === 'Manzanas_Puntos') && this.loadedLayers['Barrios']) {
         this.refreshBarriosLayer();
       }
     }
+  }
+
+  // Cargar automáticamente las capas necesarias para conteo
+  async loadCountingLayers() {
+    const currentCity = this.mapManager.getCurrentCity();
+    const cityConfig = CITIES_CONFIG[currentCity];
+    const layersToLoad = ['Manzanas_Puntos', 'Escuelas', 'Comisarias'];
+    
+    console.log('🔄 Cargando capas automáticamente para conteo...');
+    
+    for (const layerName of layersToLoad) {
+      if (cityConfig.layers[layerName] && !this.loadedLayers[layerName]) {
+        try {
+          console.log(`📥 Cargando ${layerName}...`);
+          await this.loadLayer(layerName, cityConfig.layers[layerName]);
+          console.log(`✅ ${layerName} cargada exitosamente`);
+          
+          // Si la capa está marcada como oculta, asegurarse de que no esté visible
+          if (cityConfig.layers[layerName].hidden && this.mapManager.getMap().hasLayer(this.loadedLayers[layerName].layer)) {
+            console.log(`🚫 Removiendo ${layerName} del mapa (capa oculta)`);
+            this.mapManager.getMap().removeLayer(this.loadedLayers[layerName].layer);
+          }
+        } catch (error) {
+          console.warn(`⚠️ Error cargando ${layerName}:`, error);
+        }
+      }
+    }
+    
+    // Asegurarse de que las capas ocultas no estén visibles
+    this.hideHiddenLayers();
+    
+    // Refrescar barrios para actualizar contadores
+    this.refreshBarriosLayer();
+  }
+
+  // Descargar las capas de conteo
+  unloadCountingLayers() {
+    const layersToUnload = ['Manzanas_Puntos', 'Escuelas', 'Comisarias'];
+    
+    console.log('🔄 Descargando capas de conteo...');
+    
+    layersToUnload.forEach(layerName => {
+      if (this.loadedLayers[layerName]) {
+        // Solo remover del mapa si está visible
+        if (this.mapManager.getMap().hasLayer(this.loadedLayers[layerName].layer)) {
+          this.mapManager.getMap().removeLayer(this.loadedLayers[layerName].layer);
+        }
+        // Eliminar de la lista de capas cargadas
+        delete this.loadedLayers[layerName];
+        console.log(`✅ ${layerName} descargada`);
+      }
+    });
+  }
+
+  // Limpiar capas ocultas que estén visibles
+  hideHiddenLayers() {
+    Object.entries(this.loadedLayers).forEach(([layerName, layerData]) => {
+      if (layerData.config.hidden && this.mapManager.getMap().hasLayer(layerData.layer)) {
+        console.log(`🚫 Removiendo capa oculta ${layerName} del mapa`);
+        this.mapManager.getMap().removeLayer(layerData.layer);
+      }
+    });
   }
 
   // Limpiar todas las capas
@@ -485,6 +567,97 @@ class LayerManager {
       this.mapManager.getMap().removeControl(this.currentLegend);
       this.currentLegend = null;
     }
+  }
+
+  // Contar manzanas por barrio usando intersección punto-dentro-de-polígono
+  countBlocksPerNeighborhood() {
+    const blocksLayer = this.loadedLayers['Manzanas_Puntos'];
+    const neighborhoodsLayer = this.loadedLayers['Barrios'];
+    
+    if (!blocksLayer || !neighborhoodsLayer) {
+      console.log('❌ No se encontraron las capas necesarias para manzanas');
+      return null;
+    }
+    
+    const blocks = blocksLayer.geojson.features;
+    const neighborhoods = neighborhoodsLayer.geojson.features;
+    
+    const blockCounts = {};
+    
+    console.log(`🔍 Analizando ${blocks.length} manzanas usando intersección punto-dentro-de-polígono`);
+    
+    // Debug de las primeras 3 manzanas para ver su estructura
+    blocks.slice(0, 3).forEach((block, index) => {
+      console.log(`🔍 Manzana ${index + 1}:`, {
+        properties: block.properties,
+        geometryType: block.geometry?.type,
+        hasCoordinates: !!block.geometry?.coordinates
+      });
+    });
+    
+    // Inicializar contadores
+    neighborhoods.forEach(neighborhood => {
+      const neighborhoodName = neighborhood.properties.nombre || neighborhood.properties.Barrio || 'Sin nombre';
+      blockCounts[neighborhoodName] = 0;
+    });
+    
+    let blocksProcessed = 0;
+    let blocksAssigned = 0;
+    
+    // Asignar cada manzana al barrio usando intersección punto-dentro-de-polígono
+    blocks.forEach(block => {
+      if (block.geometry && block.geometry.type === 'Point') {
+        const blockPoint = block.geometry.coordinates;
+        const blockLatLng = [blockPoint[1], blockPoint[0]]; // [lat, lng]
+        blocksProcessed++;
+        
+        let assignedNeighborhood = null;
+        
+        // Buscar el barrio que contiene esta manzana
+        neighborhoods.forEach(neighborhood => {
+          if (neighborhood.geometry && (neighborhood.geometry.type === 'Polygon' || neighborhood.geometry.type === 'MultiPolygon')) {
+            let coordinates;
+            if (neighborhood.geometry.type === 'Polygon') {
+              coordinates = neighborhood.geometry.coordinates[0];
+            } else { // MultiPolygon
+              coordinates = neighborhood.geometry.coordinates[0][0];
+            }
+            
+            const neighborhoodName = neighborhood.properties.nombre || neighborhood.properties.Barrio || 'Sin nombre';
+            
+            // Convertir coordenadas del polígono de [lng, lat] a [lat, lng] para que coincidan con blockLatLng
+            const polygonCoords = coordinates.map(coord => [coord[1], coord[0]]); // [lng, lat] -> [lat, lng]
+            
+            if (this.isPointInPolygon(blockLatLng, polygonCoords)) {
+              assignedNeighborhood = neighborhoodName;
+              
+              // Debug para las primeras 5 manzanas
+              if (blocksProcessed <= 5) {
+                console.log(`🏘️ Manzana "${block.properties.DFRM || 'Sin ID'}" está DENTRO del barrio "${neighborhoodName}"`);
+                console.log(`   Coordenadas manzana: [${blockLatLng[0]}, ${blockLatLng[1]}]`);
+                console.log(`   Primeras 3 coordenadas barrio:`, polygonCoords.slice(0, 3));
+              }
+            }
+          }
+        });
+        
+        if (assignedNeighborhood) {
+          blockCounts[assignedNeighborhood]++;
+          blocksAssigned++;
+        } else {
+          if (blocksProcessed <= 5) {
+            console.log(`❌ Manzana "${block.properties.DFRM || 'Sin ID'}" no está dentro de ningún barrio`);
+            console.log(`   Coordenadas manzana: [${blockLatLng[0]}, ${blockLatLng[1]}]`);
+            console.log(`   Propiedades manzana:`, block.properties);
+          }
+        }
+      }
+    });
+    
+    console.log(`📊 Resultado: ${blocksProcessed} manzanas procesadas, ${blocksAssigned} asignadas a barrios`);
+    console.log('📈 Conteo de manzanas por barrio:', blockCounts);
+    
+    return blockCounts;
   }
 
   // Contar comisarías por barrio usando intersección punto-dentro-de-polígono

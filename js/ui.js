@@ -14,8 +14,13 @@ class UIManager {
     const cityConfig = CITIES_CONFIG[currentCity];
     const groups = {};
     
-    // Agrupar capas
+    // Agrupar capas (excluyendo las ocultas)
     Object.entries(cityConfig.layers).forEach(([name, config]) => {
+      // Saltar capas ocultas
+      if (config.hidden) {
+        return;
+      }
+      
       if (!groups[config.group]) {
         groups[config.group] = [];
       }
