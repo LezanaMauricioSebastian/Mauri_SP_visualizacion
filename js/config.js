@@ -273,8 +273,10 @@ const COLOR_PALETTES = {
     'solo_primario': '#4CAF50',      // Verde - Solo primario
     'solo_secundario': '#2196F3',    // Azul - Solo secundario
     'infantes_primario': '#8BC34A',  // Verde claro - Jardín + Primario
-    'primario_secundario': '#00BCD4', // Cian - Primario + Secundario
-    'todos_niveles': '#9C27B0',      // Púrpura - Todos los niveles
+    'biblioteca': '#795548',         // Marrón - Bibliotecas
+    'centro_educacion_fisica': '#FF9800', // Naranja oscuro - Centros de educación física
+    'instituto_especializado': '#E91E63', // Rosa - Institutos especializados
+    'educacion_adultos': '#607D8B',  // Azul gris - Educación para adultos
     'sin_niveles': '#E0E0E0'         // Gris - Sin niveles definidos
   }
 };

@@ -280,6 +280,34 @@ class LayerManager {
     if (this.loadedLayers[layerName]) {
       this.loadedLayers[layerName].layer.addTo(this.mapManager.getMap());
       this.updateLegend(layerName);
+      
+      // Si se agrega la capa de escuelas o comisarías, actualizar estilos de barrios
+      if ((layerName === 'Escuelas' || layerName === 'Comisarias') && this.loadedLayers['Barrios']) {
+        this.refreshBarriosLayer();
+      }
+    }
+  }
+
+  // Refrescar capa de barrios para actualizar contadores de escuelas
+  refreshBarriosLayer() {
+    if (this.loadedLayers['Barrios']) {
+      const barriosLayer = this.loadedLayers['Barrios'];
+      const map = this.mapManager.getMap();
+      
+      // Solo refrescar si la capa de Barrios ya está visible en el mapa
+      if (map.hasLayer(barriosLayer.layer)) {
+        // Remover la capa actual
+        map.removeLayer(barriosLayer.layer);
+        
+        // Recrear la capa con los nuevos estilos
+        const newLayer = this.createStandardLayer(barriosLayer.geojson, barriosLayer.config, 'Barrios');
+        
+        // Actualizar la referencia
+        this.loadedLayers['Barrios'].layer = newLayer;
+        
+        // Agregar la nueva capa al mapa
+        newLayer.addTo(map);
+      }
     }
   }
 
@@ -288,6 +316,11 @@ class LayerManager {
     if (this.loadedLayers[layerName]) {
       this.mapManager.getMap().removeLayer(this.loadedLayers[layerName].layer);
       this.removeLegend();
+      
+      // Si se remueve la capa de escuelas o comisarías, actualizar estilos de barrios
+      if ((layerName === 'Escuelas' || layerName === 'Comisarias') && this.loadedLayers['Barrios']) {
+        this.refreshBarriosLayer();
+      }
     }
   }
 
@@ -394,14 +427,6 @@ class LayerManager {
         if (circuitos.size > 8) content += '<div style="text-align:center;color:#718096;font-size:0.75rem;">...</div>';
       } else if (layerName === 'Escuelas') {
         content += `<div class="legend-item">
-          <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.todos_niveles};border-radius:50%;width:12px;height:12px;"></div>
-          Todos los niveles
-        </div>`;
-        content += `<div class="legend-item">
-          <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.primario_secundario};border-radius:50%;width:12px;height:12px;"></div>
-          Primario + Secundario
-        </div>`;
-        content += `<div class="legend-item">
           <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.infantes_primario};border-radius:50%;width:12px;height:12px;"></div>
           Jardín + Primario
         </div>`;
@@ -422,9 +447,29 @@ class LayerManager {
           Sin niveles definidos
         </div>`;
         
+        // Tipos especiales de instituciones
+        content += `<div style="margin-top:15px;font-weight:bold;color:#333;">Instituciones especiales:</div>`;
+        content += `<div class="legend-item">
+          <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.biblioteca};border-radius:50%;width:12px;height:12px;"></div>
+          📚 Bibliotecas
+        </div>`;
+        content += `<div class="legend-item">
+          <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.centro_educacion_fisica};border-radius:50%;width:12px;height:12px;"></div>
+          ⚽ Centros de Educación Física
+        </div>`;
+        content += `<div class="legend-item">
+          <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.instituto_especializado};border-radius:50%;width:12px;height:12px;"></div>
+          🎨 Institutos Especializados
+        </div>`;
+        content += `<div class="legend-item">
+          <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.educacion_adultos};border-radius:50%;width:12px;height:12px;"></div>
+          👨‍🎓 Educación para Adultos
+        </div>`;
+        
         // Agregar información adicional sobre la capa
         content += `<div style="margin-top:10px;padding:8px;background:#f8f9fa;border-radius:4px;font-size:0.8rem;color:#6c757d;">
-          <strong>Escuelas:</strong> Clasificación por niveles educativos
+          <strong>Instituciones Educativas:</strong> Clasificación por tipo y niveles<br>
+          <small>Incluye escuelas tradicionales e instituciones especiales</small>
         </div>`;
       }
       
@@ -440,6 +485,305 @@ class LayerManager {
       this.mapManager.getMap().removeControl(this.currentLegend);
       this.currentLegend = null;
     }
+  }
+
+  // Contar comisarías por barrio usando intersección punto-dentro-de-polígono
+  countPoliceStationsPerNeighborhood() {
+    const policeLayer = this.loadedLayers['Comisarias'];
+    const neighborhoodsLayer = this.loadedLayers['Barrios'];
+    
+    if (!policeLayer || !neighborhoodsLayer) {
+      console.log('❌ No se encontraron las capas necesarias para comisarías');
+      return null;
+    }
+    
+    const policeStations = policeLayer.geojson.features;
+    const neighborhoods = neighborhoodsLayer.geojson.features;
+    
+    const policeCounts = {};
+    
+    console.log(`🔍 Analizando ${policeStations.length} comisarías usando intersección punto-dentro-de-polígono`);
+    
+    // Inicializar contadores
+    neighborhoods.forEach(neighborhood => {
+      const neighborhoodName = neighborhood.properties.nombre || neighborhood.properties.Barrio || 'Sin nombre';
+      policeCounts[neighborhoodName] = 0;
+    });
+    
+    let stationsProcessed = 0;
+    let stationsAssigned = 0;
+    
+    // Asignar cada comisaría al barrio usando intersección punto-dentro-de-polígono
+    policeStations.forEach(station => {
+      if (station.geometry && station.geometry.type === 'Point') {
+        const stationPoint = station.geometry.coordinates;
+        const stationLatLng = [stationPoint[1], stationPoint[0]]; // [lat, lng]
+        stationsProcessed++;
+        
+        let assignedNeighborhood = null;
+        
+        // Buscar el barrio que contiene esta comisaría
+        neighborhoods.forEach(neighborhood => {
+          if (neighborhood.geometry && (neighborhood.geometry.type === 'Polygon' || neighborhood.geometry.type === 'MultiPolygon')) {
+            let coordinates;
+            if (neighborhood.geometry.type === 'Polygon') {
+              coordinates = neighborhood.geometry.coordinates[0];
+            } else { // MultiPolygon
+              coordinates = neighborhood.geometry.coordinates[0][0];
+            }
+            
+            const neighborhoodName = neighborhood.properties.nombre || neighborhood.properties.Barrio || 'Sin nombre';
+            
+            // Convertir coordenadas del polígono de [lng, lat] a [lat, lng] para que coincidan con stationLatLng
+            const polygonCoords = coordinates.map(coord => [coord[1], coord[0]]); // [lng, lat] -> [lat, lng]
+            
+            if (this.isPointInPolygon(stationLatLng, polygonCoords)) {
+              assignedNeighborhood = neighborhoodName;
+              
+              // Debug para las primeras 5 comisarías
+              if (stationsProcessed <= 5) {
+                console.log(`🚔 Comisaría "${station.properties.Unidad || 'Sin nombre'}" está DENTRO del barrio "${neighborhoodName}"`);
+              }
+            }
+          }
+        });
+        
+        if (assignedNeighborhood) {
+          policeCounts[assignedNeighborhood]++;
+          stationsAssigned++;
+        } else {
+          if (stationsProcessed <= 5) {
+            console.log(`❌ Comisaría "${station.properties.Unidad || 'Sin nombre'}" no está dentro de ningún barrio`);
+          }
+        }
+      }
+    });
+    
+    console.log(`📊 Resultado: ${stationsProcessed} comisarías procesadas, ${stationsAssigned} asignadas a barrios`);
+    console.log('📈 Conteo de comisarías por barrio:', policeCounts);
+    
+    return policeCounts;
+  }
+
+  // Contar escuelas por barrio usando el barrio más cercano
+  countSchoolsPerNeighborhood() {
+    const schoolsLayer = this.loadedLayers['Escuelas'];
+    const neighborhoodsLayer = this.loadedLayers['Barrios'];
+    
+    if (!schoolsLayer || !neighborhoodsLayer) {
+      console.log('❌ No se encontraron las capas necesarias');
+      return null;
+    }
+    
+    const schools = schoolsLayer.geojson.features;
+    const neighborhoods = neighborhoodsLayer.geojson.features;
+    
+    const schoolCounts = {};
+    
+    console.log(`🔍 Analizando ${schools.length} escuelas usando intersección punto-dentro-de-polígono`);
+    
+    // Debug: verificar si hay escuelas con múltiples puntos o nombres duplicados
+    const schoolNames = {};
+    const multiPointSchools = [];
+    
+    schools.forEach(school => {
+      const name = school.properties.nombre || 'Sin nombre';
+      if (schoolNames[name]) {
+        schoolNames[name]++;
+      } else {
+        schoolNames[name] = 1;
+      }
+      
+      if (school.geometry.type === 'MultiPoint' && school.geometry.coordinates.length > 1) {
+        multiPointSchools.push({
+          name: name,
+          points: school.geometry.coordinates.length
+        });
+      }
+    });
+    
+    const duplicateNames = Object.entries(schoolNames).filter(([name, count]) => count > 1);
+    if (duplicateNames.length > 0) {
+      console.log(`🔄 Escuelas con nombres duplicados:`, duplicateNames.slice(0, 5));
+    }
+    
+    if (multiPointSchools.length > 0) {
+      console.log(`📍 Escuelas con múltiples puntos:`, multiPointSchools.slice(0, 5));
+    }
+    
+    // Inicializar contadores
+    neighborhoods.forEach(neighborhood => {
+      const neighborhoodName = neighborhood.properties.nombre || neighborhood.properties.Barrio || 'Sin nombre';
+      schoolCounts[neighborhoodName] = 0;
+    });
+    
+    let schoolsProcessed = 0;
+    let schoolsAssigned = 0;
+    
+    // Debug: mostrar información de los primeros 3 barrios
+    neighborhoods.slice(0, 3).forEach((neighborhood, index) => {
+      console.log(`🔍 Barrio ${index + 1}:`, {
+        nombre: neighborhood.properties.nombre || neighborhood.properties.Barrio || 'Sin nombre',
+        geometryType: neighborhood.geometry?.type,
+        hasCoordinates: !!neighborhood.geometry?.coordinates,
+        coordinatesLength: neighborhood.geometry?.coordinates?.length
+      });
+    });
+    
+    // Asignar cada escuela al barrio usando intersección punto-dentro-de-polígono
+    schools.forEach(school => {
+      if (school.geometry && school.geometry.type === 'MultiPoint') {
+        const schoolPoint = school.geometry.coordinates[0];
+        const schoolLatLng = [schoolPoint[1], schoolPoint[0]]; // [lat, lng]
+        schoolsProcessed++;
+        
+        let assignedNeighborhood = null;
+        
+        // Buscar el barrio que contiene esta escuela
+        neighborhoods.forEach(neighborhood => {
+          if (neighborhood.geometry && (neighborhood.geometry.type === 'Polygon' || neighborhood.geometry.type === 'MultiPolygon')) {
+            let coordinates;
+            if (neighborhood.geometry.type === 'Polygon') {
+              coordinates = neighborhood.geometry.coordinates[0];
+            } else { // MultiPolygon
+              coordinates = neighborhood.geometry.coordinates[0][0];
+            }
+            
+            const neighborhoodName = neighborhood.properties.nombre || neighborhood.properties.Barrio || 'Sin nombre';
+            
+            // Debug detallado para las primeras 3 escuelas y primeros 2 barrios
+            if (schoolsProcessed <= 3 && (neighborhoodName === 'Matadero' || neighborhoodName === 'Domingo F. Sarmiento')) {
+              console.log(`🔍 Probando escuela "${school.properties.nombre}" en barrio "${neighborhoodName}"`);
+              console.log(`   Coordenadas escuela: [${schoolLatLng[0]}, ${schoolLatLng[1]}]`);
+              console.log(`   Estructura completa del polígono:`, neighborhood.geometry);
+              console.log(`   Coordenadas extraídas:`, coordinates);
+              console.log(`   Primeras 3 coordenadas del polígono:`, coordinates.slice(0, 3));
+              console.log(`   Total coordenadas del polígono:`, coordinates.length);
+              
+              // Test con coordenadas invertidas
+              const testPoint = [schoolLatLng[1], schoolLatLng[0]]; // [lng, lat]
+              const testResult = this.isPointInPolygon(testPoint, coordinates);
+              console.log(`   Test con coordenadas invertidas [${testPoint[0]}, ${testPoint[1]}]: ${testResult}`);
+              
+              // Test con coordenadas del polígono invertidas (formato correcto)
+              const invertedPolygon = coordinates.map(coord => [coord[1], coord[0]]);
+              const testResult2 = this.isPointInPolygon(schoolLatLng, invertedPolygon);
+              console.log(`   Test con polígono en formato correcto [lat,lng]: ${testResult2}`);
+              
+              // Test usando Leaflet directamente
+              try {
+                const leafletPolygon = L.polygon(coordinates.map(coord => [coord[1], coord[0]]));
+                const leafletPoint = L.latLng(schoolLatLng[0], schoolLatLng[1]);
+                const leafletResult = leafletPolygon.getBounds().contains(leafletPoint);
+                console.log(`   Test con Leaflet bounds: ${leafletResult}`);
+              } catch (error) {
+                console.log(`   Error en test Leaflet:`, error.message);
+              }
+            }
+            
+            // Convertir coordenadas del polígono de [lng, lat] a [lat, lng] para que coincidan con schoolLatLng
+            const polygonCoords = coordinates.map(coord => [coord[1], coord[0]]); // [lng, lat] -> [lat, lng]
+            
+            if (this.isPointInPolygon(schoolLatLng, polygonCoords)) {
+              assignedNeighborhood = neighborhoodName;
+              
+              // Debug para las primeras 5 escuelas
+              if (schoolsProcessed <= 5) {
+                console.log(`✅ Escuela "${school.properties.nombre}" está DENTRO del barrio "${neighborhoodName}"`);
+              }
+            } else if (schoolsProcessed <= 3 && (neighborhoodName === 'Matadero' || neighborhoodName === 'Domingo F. Sarmiento')) {
+              console.log(`❌ Escuela "${school.properties.nombre}" NO está dentro del barrio "${neighborhoodName}"`);
+            }
+          }
+        });
+        
+        if (assignedNeighborhood) {
+          schoolCounts[assignedNeighborhood]++;
+          schoolsAssigned++;
+          
+          // Debug para barrios específicos (primeras 5 escuelas por barrio)
+          if (!this.debugCounts) this.debugCounts = {};
+          if (!this.debugCounts[assignedNeighborhood]) this.debugCounts[assignedNeighborhood] = 0;
+          this.debugCounts[assignedNeighborhood]++;
+          
+          if (this.debugCounts[assignedNeighborhood] <= 5) {
+            console.log(`🏫 ${assignedNeighborhood}: Escuela "${school.properties.nombre}" (dentro del polígono)`);
+          }
+        } else {
+          if (schoolsProcessed <= 5) {
+            console.log(`❌ Escuela "${school.properties.nombre}" no está dentro de ningún barrio`);
+          }
+        }
+      }
+    });
+    
+    console.log(`📊 Resultado: ${schoolsProcessed} escuelas procesadas, ${schoolsAssigned} asignadas a barrios (usando intersección punto-dentro-de-polígono)`);
+    console.log('📈 Conteo por barrio:', schoolCounts);
+    
+    // Mostrar resumen de los barrios con más escuelas
+    const sortedCounts = Object.entries(schoolCounts)
+      .filter(([name, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+    
+    if (sortedCounts.length > 0) {
+      console.log('🏆 Top 10 barrios con más escuelas:');
+      sortedCounts.forEach(([name, count]) => {
+        console.log(`   ${name}: ${count} escuelas`);
+      });
+    }
+    
+    return schoolCounts;
+  }
+  
+  // Calcular centroide de un polígono
+  calculateCentroid(coordinates) {
+    let x = 0, y = 0;
+    coordinates.forEach(coord => {
+      x += coord[0]; // lng
+      y += coord[1]; // lat
+    });
+    return [y / coordinates.length, x / coordinates.length]; // [lat, lng]
+  }
+  
+  // Calcular distancia entre dos puntos en kilómetros (fórmula de Haversine)
+  calculateDistance(point1, point2) {
+    const R = 6371; // Radio de la Tierra en km
+    const dLat = this.toRadians(point2[0] - point1[0]);
+    const dLng = this.toRadians(point2[1] - point1[1]);
+    const lat1 = this.toRadians(point1[0]);
+    const lat2 = this.toRadians(point2[0]);
+    
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.sin(dLng/2) * Math.sin(dLng/2) * Math.cos(lat1) * Math.cos(lat2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+  
+  // Convertir grados a radianes
+  toRadians(degrees) {
+    return degrees * (Math.PI / 180);
+  }
+
+  // Función para verificar si un punto está dentro de un polígono
+  isPointInPolygon(point, polygon) {
+    if (!point || !polygon || polygon.length < 3) {
+      return false;
+    }
+    
+    const x = point[0], y = point[1];
+    let inside = false;
+    
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i][0], yi = polygon[i][1];
+      const xj = polygon[j][0], yj = polygon[j][1];
+      
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+        inside = !inside;
+      }
+    }
+    
+    return inside;
   }
 
   // Obtener capas cargadas

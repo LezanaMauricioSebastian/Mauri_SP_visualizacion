@@ -27,4 +27,7 @@ class MapApp {
 document.addEventListener('DOMContentLoaded', function() {
   const app = new MapApp();
   app.init();
+  
+  // Hacer el layerManager accesible globalmente para las funciones de estilo
+  window.layerManager = app.layerManager;
 }); 
