@@ -13,7 +13,7 @@ Presidencia Roque Sáenz Peña (`sp`). `dataPath`: `datos/SP/`.
 | `policia_comisarias_sp.geojson` | Comisarias | Point | `Unidad`, `Direccion`, `correo ele`, `telefono` |
 | `mzas_poly_22_sp.geojson` | Manzanas | MultiPolygon | `DFRM`, `AREA` (~1963) |
 | `mzas_point_22_sp.geojson` | Manzanas_Puntos (**hidden**) | Point | centroids for block counts |
-| `circuilto_elect_sp.geojson` | Circuito electoral | MultiPolygon | `CIRC_ELECT` (filename typo is intentional in config) |
+| `circuilto_elect_sp.geojson` | Circuito electoral | MultiPolygon | `CIRC_ELECT` 87–97 (filename typo is intentional in config). Urban 88–94 are the original local polygons; rural **87, 95, 96, 97** completed from DINE/Chaco cartography ([tartagalensis/circuitos_electorales_AR](https://github.com/tartagalensis/circuitos_electorales_AR) `CHACO.geojson`, dept. 013). **96** was extended south so EEP 139 (Col. Ppa. Aguado) falls inside, without overlapping urban 89. |
 | `mesas_electores_x_escuela_sp.geojson` | Mesas + Electores | Point | `NOMBRE_ESC`, `CUENTADENU`, `SUMADECUEN`, `CIRCUITO` |
 | `radios_censo_sp.geojson` | Radios Censales | MultiPolygon | `LINK`, `RADIO`, `AREA` |
 | `cant_viv_radio_sp.geojson` | Población por Radio | MultiPolygon | `Datos x ra` (total), `_1` mujeres, `_2` varones, `_3` viviendas, `RADIO2020` |

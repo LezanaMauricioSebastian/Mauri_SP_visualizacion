@@ -418,12 +418,22 @@ class QuestionsManager {
       layer.setStyle(this.circuitStyle(feature, id));
     });
     const layer = this.circuitLayersById[id];
-    if (layer) {
-      if (layer.getBounds && layer.getBounds().isValid()) {
-        this.mapManager.getMap().fitBounds(layer.getBounds(), { padding: [40, 40], maxZoom: 15 });
-      }
-      if (layer.openPopup) layer.openPopup();
+    const map = this.mapManager.getMap();
+    const bounds = L.latLngBounds([]);
+    if (layer && layer.getBounds && layer.getBounds().isValid()) {
+      bounds.extend(layer.getBounds());
     }
+    const row = this.agg && this.agg.byCircuit[id];
+    if (row && row.schools) {
+      row.schools.forEach((school) => {
+        const latlng = SpatialUtils.extractLatLng(school.feature && school.feature.geometry);
+        if (latlng) bounds.extend(latlng);
+      });
+    }
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+    }
+    if (layer && layer.openPopup) layer.openPopup();
     this.markRankingActive(id);
   }
 
