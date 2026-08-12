@@ -266,6 +266,39 @@ class MapUtils {
           <span class="popup-value">${feature.properties.cueanexo}</span>
         </div>`;
       }
+
+      if (feature.properties.telefono) {
+        content += `<div class="popup-item">
+          <span class="popup-label">Teléfono:</span>
+          <span class="popup-value">${feature.properties.telefono}</span>
+        </div>`;
+      }
+      if (feature.properties.email) {
+        content += `<div class="popup-item">
+          <span class="popup-label">Email:</span>
+          <span class="popup-value">${feature.properties.email}</span>
+        </div>`;
+      }
+      if (feature.properties.circuito != null && feature.properties.circuito !== '') {
+        content += `<div class="popup-item">
+          <span class="popup-label">Circuito:</span>
+          <span class="popup-value">${feature.properties.circuito}</span>
+        </div>`;
+      }
+      const mesas = feature.properties.cn_mesas ?? feature.properties.CuentaDeNU;
+      const electores = feature.properties.electores ?? feature.properties.SumaDeCuen;
+      if (mesas != null && mesas !== '') {
+        content += `<div class="popup-item">
+          <span class="popup-label">Mesas:</span>
+          <span class="popup-value">${mesas}</span>
+        </div>`;
+      }
+      if (electores != null && electores !== '') {
+        content += `<div class="popup-item">
+          <span class="popup-label">Electores:</span>
+          <span class="popup-value">${electores}</span>
+        </div>`;
+      }
       
       return content;
     }

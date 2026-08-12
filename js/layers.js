@@ -635,9 +635,13 @@ class LayerManager {
           👨‍🎓 Educación para Adultos
         </div>`;
 
+        const fromPadron = !!(escuelasGeo && escuelasGeo.features &&
+          escuelasGeo.features.some((f) => f.properties && f.properties.fuente_padron));
         content += `<div style="margin-top:10px;padding:8px;background:#f8f9fa;border-radius:4px;font-size:0.8rem;color:#6c757d;">
           <strong>Instituciones Educativas:</strong> Clasificación por tipo y niveles<br>
-          <small>Incluye escuelas tradicionales e instituciones especiales</small>
+          <small>${fromPadron
+            ? 'Niveles y contacto: Padrón Oficial 2025 (DIE). Puntos: establecimientos con mesas electorales.'
+            : 'Incluye escuelas tradicionales e instituciones especiales'}</small>
         </div>`;
         }
       }

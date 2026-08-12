@@ -130,8 +130,8 @@ const CITIES_CONFIG = {
         group: 'Servicios'
       },
       'Escuelas': {
-        file: 'mesas_electores_x_escuelas_amgr.geojson',
-        properties: ['nombre', 'circuito', 'cn_mesas', 'electores', 'localidad', 'cueanexo'],
+        file: 'escuelas_amgr_enriquecido.geojson',
+        properties: ['nombre', 'domicilio', 'sector', 'nvcjinfantes', 'nvcprimario', 'nvcsecundario'],
         icon: 'fas fa-school',
         group: 'Infraestructura',
         featureCount: 142
@@ -207,8 +207,8 @@ const CITIES_CONFIG = {
         group: 'Servicios'
       },
       'Escuelas': {
-        file: 'mesas_electores_x_escuela_va.geojson',
-        properties: ['nombre', 'circuito', 'CuentaDeNU', 'SumaDeCuen', 'domicilio', 'localidad', 'cueanexo'],
+        file: 'escuelas_va_enriquecido.geojson',
+        properties: ['nombre', 'domicilio', 'sector', 'nvcjinfantes', 'nvcprimario', 'nvcsecundario'],
         icon: 'fas fa-school',
         group: 'Infraestructura',
         featureCount: 16
@@ -342,7 +342,10 @@ const TRANSLATIONS = {
     'CuentaDeNU': 'Mesas',
     'SumaDeCuen': 'Electores',
     'localidad': 'Localidad',
-    'cueanexo': 'CUE/Anexo'
+    'cueanexo': 'CUE/Anexo',
+    'telefono': 'Teléfono',
+    'email': 'Email',
+    'ambito': 'Ámbito'
   },
   'Barrios': { 'Barrio': 'Barrio', 'Municipio': 'Municipio', 'nombre': 'Nombre' },
   'Asentamientos': { 
