@@ -546,4 +546,15 @@ class MapUtils {
       opacity: 0.7
     };
   }
+
+  static getChoroplethStyle(value, breaks, palette, highlighted) {
+    const fill = ElectoralAnalysis.colorFor(value, breaks, palette || COLOR_PALETTES.choropleth);
+    return {
+      color: highlighted ? '#1a202c' : fill,
+      fillColor: fill,
+      weight: highlighted ? 3 : 2,
+      fillOpacity: highlighted ? 0.8 : 0.65,
+      opacity: 0.95
+    };
+  }
 }

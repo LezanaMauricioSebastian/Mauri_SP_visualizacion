@@ -471,6 +471,12 @@ class LayerManager {
     });
   }
 
+  hideAllVisibleLayers() {
+    Object.keys(this.loadedLayers).forEach((name) => {
+      this.removeLayerFromMap(name);
+    });
+  }
+
   // Limpiar todas las capas
   clearAllLayers() {
     this.layerGeneration++;

@@ -3,6 +3,7 @@ class UIManager {
   constructor(mapManager, layerManager) {
     this.mapManager = mapManager;
     this.layerManager = layerManager;
+    this.questionsManager = null;
   }
 
   // Crear controles de capas
@@ -124,27 +125,45 @@ class UIManager {
     }
   }
 
+  hideAllLayers() {
+    document.querySelectorAll('.layer-checkbox:checked').forEach((checkbox) => {
+      checkbox.checked = false;
+    });
+    this.layerManager.hideAllVisibleLayers();
+  }
+
+  syncCityChrome() {
+    const cityKey = this.mapManager.getCurrentCity();
+    document.querySelectorAll('.city-option').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.city === cityKey);
+    });
+    const cityConfig = CITIES_CONFIG[cityKey];
+    if (cityConfig) {
+      document.querySelector('.logo h1').textContent = `Mapa Interactivo - ${cityConfig.name}`;
+    }
+  }
+
   // Cambiar ciudad
   switchCity(cityKey) {
     if (cityKey === this.mapManager.getCurrentCity()) return;
-    
+
+    if (this.questionsManager) {
+      this.questionsManager.analysisGeneration += 1;
+      this.questionsManager.clearAnalysisLayersOnly();
+    }
+
     // Limpiar capas cargadas
     this.layerManager.clearAllLayers();
-    
+
     // Actualizar vista del mapa
     this.mapManager.switchToCity(cityKey);
-    
-    // Actualizar botones
-    document.querySelectorAll('.city-option').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.city === cityKey);
-    });
-    
+
+    this.syncCityChrome();
+
     // Recrear controles
     this.createLayerControls();
-    
-    // Actualizar título
-    const cityConfig = CITIES_CONFIG[cityKey];
-    document.querySelector('.logo h1').textContent = `Mapa Interactivo - ${cityConfig.name}`;
+
+    if (this.questionsManager) this.questionsManager.onCitySwitch();
   }
 
   // Configurar event listeners
@@ -185,6 +204,7 @@ class UIManager {
 
   // Inicializar interfaz
   init() {
+    this.syncCityChrome();
     this.createLayerControls();
     this.setupEventListeners();
   }

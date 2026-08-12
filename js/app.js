@@ -4,20 +4,27 @@ class MapApp {
     this.mapManager = null;
     this.layerManager = null;
     this.uiManager = null;
+    this.questionsManager = null;
   }
 
   // Inicializar la aplicación
   init() {
+    const params = QuestionsManager.readUrlParams();
+
     // Inicializar módulos
     this.mapManager = new MapManager();
+    if (params.city) this.mapManager.currentCity = params.city;
     this.layerManager = new LayerManager(this.mapManager);
     this.uiManager = new UIManager(this.mapManager, this.layerManager);
+    this.questionsManager = new QuestionsManager(this.mapManager, this.layerManager, this.uiManager);
+    this.uiManager.questionsManager = this.questionsManager;
 
     // Inicializar mapa
     this.mapManager.init();
 
     // Inicializar interfaz
     this.uiManager.init();
+    this.questionsManager.init();
 
     console.log('🗺️ Mapa Interactivo del Chaco iniciado correctamente');
   }

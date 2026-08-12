@@ -5,6 +5,7 @@ class LegendManager {
     this.getLoadedLayers = getLoadedLayers;
     this.currentLegend = null;
     this.legendStack = [];
+    this.analysisMode = false;
     this.collapsed = this.readCollapsedPref();
   }
 
@@ -32,7 +33,61 @@ class LegendManager {
     }
   }
 
+  updateAnalysis(title, items, footnote) {
+    this.analysisMode = true;
+    this.remove();
+
+    this.currentLegend = L.control({ position: 'bottomright' });
+    this.currentLegend.onAdd = () => {
+      const div = L.DomUtil.create('div', 'legend');
+      let content = `<button type="button" class="legend-title" aria-expanded="true" aria-controls="legend-body" title="Contraer">
+        <span class="legend-title-text"><i class="fas fa-chart-area"></i> ${title}</span>
+        <i class="fas fa-chevron-up legend-chevron" aria-hidden="true"></i>
+      </button>`;
+      let body = '';
+      (items || []).forEach((item) => {
+        body += `<div class="legend-item">
+          <div class="legend-color" style="background:${item.color}"></div>
+          ${item.label}
+        </div>`;
+      });
+      if (footnote) {
+        body += `<div style="margin-top:10px;padding:8px;background:#f8f9fa;border-radius:4px;font-size:0.8rem;color:#6c757d;">
+          ${footnote}
+        </div>`;
+      }
+      content += `<div class="legend-body" id="legend-body">${body}</div>`;
+      div.innerHTML = content;
+
+      L.DomEvent.disableClickPropagation(div);
+      L.DomEvent.disableScrollPropagation(div);
+      this.applyCollapsedState(div);
+
+      const toggleBtn = div.querySelector('.legend-title');
+      if (toggleBtn) {
+        L.DomEvent.on(toggleBtn, 'click', (e) => {
+          L.DomEvent.stop(e);
+          this.collapsed = !this.collapsed;
+          this.persistCollapsed();
+          this.applyCollapsedState(div);
+        });
+      }
+      return div;
+    };
+    this.currentLegend.addTo(this.mapManager.getMap());
+  }
+
+  clearAnalysis() {
+    if (!this.analysisMode) {
+      this.remove();
+      return;
+    }
+    this.analysisMode = false;
+    this.restoreTop();
+  }
+
   update(layerName) {
+    this.analysisMode = false;
     this.remove();
 
     const loadedLayers = this.getLoadedLayers();
@@ -253,6 +308,7 @@ class LegendManager {
 
   clear() {
     this.legendStack = [];
+    this.analysisMode = false;
     this.remove();
   }
 }

@@ -95,6 +95,13 @@ const CITIES_CONFIG = {
         heavy: true,
         featureCount: 91799
       }
+    },
+    electoral: {
+      circuitoPoly: 'CIRC_ELECT',
+      circuitoPoint: 'CIRCUITO',
+      mesas: 'CUENTADENU',
+      electores: 'SUMADECUEN',
+      escuela: 'NOMBRE_ESC'
     }
   },
   gr: {
@@ -178,6 +185,13 @@ const CITIES_CONFIG = {
           icon: 'fas fa-users',
           group: 'Censo'
         }
+    },
+    electoral: {
+      circuitoPoly: 'circuito',
+      circuitoPoint: 'circuito',
+      mesas: 'cn_mesas',
+      electores: 'electores',
+      escuela: 'nombre'
     }
   },
   va: {
@@ -265,9 +279,51 @@ const CITIES_CONFIG = {
         heavy: true,
         featureCount: 33854
       }
+    },
+    electoral: {
+      circuitoPoly: 'CIRC',
+      circuitoPoint: 'circuito',
+      mesas: 'CuentaDeNU',
+      electores: 'SumaDeCuen',
+      escuela: 'nombre'
     }
   }
 };
+
+const QUESTIONS = [
+  {
+    id: 'padron',
+    title: '¿Dónde se concentra el padrón?',
+    blurb: 'Electores sumados por circuito. Sirve para ver dónde pesa el padrón, no quién ganó.',
+    metric: 'electores',
+    icon: 'fas fa-users',
+    cities: ['sp', 'gr', 'va']
+  },
+  {
+    id: 'mesas',
+    title: '¿Dónde hay más mesas?',
+    blurb: 'Cantidad de mesas por circuito: la logística del domingo.',
+    metric: 'mesas',
+    icon: 'fas fa-vote-yea',
+    cities: ['sp', 'gr', 'va']
+  },
+  {
+    id: 'carga',
+    title: '¿Qué circuitos tienen mesas más cargadas?',
+    blurb: 'Electores por mesa. Más alto = mesas más saturadas.',
+    metric: 'ratio',
+    icon: 'fas fa-balance-scale',
+    cities: ['sp', 'gr', 'va']
+  },
+  {
+    id: 'escuelas',
+    title: '¿Qué escuelas concentran más electores?',
+    blurb: 'Establecimientos de votación ordenados por padrón. No es un mapa de circuitos.',
+    metric: 'escuelas',
+    icon: 'fas fa-school',
+    cities: ['sp', 'gr', 'va']
+  }
+];
 
 // Paletas de colores
 const COLOR_PALETTES = {
@@ -307,6 +363,7 @@ const COLOR_PALETTES = {
     'equilibrado': '#A5D6A7',    // Verde claro
     'sin_datos': '#E0E0E0'       // Gris claro
   },
+  choropleth: ['#edf2ff', '#c3dafe', '#7f9cf5', '#5a67d8', '#3c366b'],
   escuelas: {
     'solo_infantes': '#FFB74D',      // Naranja - Solo jardín
     'solo_primario': '#4CAF50',      // Verde - Solo primario
