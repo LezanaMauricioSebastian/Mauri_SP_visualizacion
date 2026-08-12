@@ -129,6 +129,13 @@ const CITIES_CONFIG = {
         icon: 'fas fa-tree',
         group: 'Servicios'
       },
+      'Escuelas': {
+        file: 'mesas_electores_x_escuelas_amgr.geojson',
+        properties: ['nombre', 'circuito', 'cn_mesas', 'electores', 'localidad', 'cueanexo'],
+        icon: 'fas fa-school',
+        group: 'Infraestructura',
+        featureCount: 142
+      },
       'Manzanas': {
         file: 'manzanero_amgr.geojson',
         properties: ['PDLFRM','AREA'],
@@ -198,6 +205,13 @@ const CITIES_CONFIG = {
         properties: ['leisure', 'name'],
         icon: 'fas fa-tree',
         group: 'Servicios'
+      },
+      'Escuelas': {
+        file: 'mesas_electores_x_escuela_va.geojson',
+        properties: ['nombre', 'circuito', 'CuentaDeNU', 'SumaDeCuen', 'domicilio', 'localidad', 'cueanexo'],
+        icon: 'fas fa-school',
+        group: 'Infraestructura',
+        featureCount: 16
       },
       'Manzanas': {
         file: 'mzas_poligonos_22_va.geojson',
@@ -302,7 +316,8 @@ const COLOR_PALETTES = {
     'centro_educacion_fisica': '#FF9800', // Naranja oscuro - Centros de educación física
     'instituto_especializado': '#E91E63', // Rosa - Institutos especializados
     'educacion_adultos': '#607D8B',  // Azul gris - Educación para adultos
-    'sin_niveles': '#E0E0E0'         // Gris - Sin niveles definidos
+    'sin_niveles': '#E0E0E0',        // Gris - Sin niveles definidos
+    'default': '#1976D2'             // Azul - Escuelas sin clasificación (GR/VA mesas)
   }
 };
 
@@ -320,7 +335,14 @@ const TRANSLATIONS = {
     'sector': 'Sector',
     'nvcjinfantes': 'Jardín de Infantes',
     'nvcprimario': 'Primario',
-    'nvcsecundario': 'Secundario'
+    'nvcsecundario': 'Secundario',
+    'circuito': 'Circuito',
+    'cn_mesas': 'Mesas',
+    'electores': 'Electores',
+    'CuentaDeNU': 'Mesas',
+    'SumaDeCuen': 'Electores',
+    'localidad': 'Localidad',
+    'cueanexo': 'CUE/Anexo'
   },
   'Barrios': { 'Barrio': 'Barrio', 'Municipio': 'Municipio', 'nombre': 'Nombre' },
   'Asentamientos': { 

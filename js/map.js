@@ -79,6 +79,14 @@ class MapUtils {
     return String(name);
   }
 
+  static hasSchoolLevelFields(properties) {
+    if (!properties) return false;
+    return Object.prototype.hasOwnProperty.call(properties, 'nvcjinfantes') ||
+           Object.prototype.hasOwnProperty.call(properties, 'nvcprimario') ||
+           Object.prototype.hasOwnProperty.call(properties, 'nvcsecundario') ||
+           Object.prototype.hasOwnProperty.call(properties, 'nvcjmaternal');
+  }
+
   // HTML del popup (se evalúa al abrir, así los conteos de Barrios quedan frescos)
   static buildPopupContent(feature, properties, layerName, currentCity) {
     let content = `<div class="popup-title"><i class="${CITIES_CONFIG[currentCity].layers[layerName].icon}"></i> ${layerName}</div>`;
@@ -152,8 +160,9 @@ class MapUtils {
       return content;
     }
 
-    // Manejo especial para capa de escuelas
-    if (layerName === 'Escuelas') {
+    // Manejo especial para capa de escuelas (catálogo SP con niveles).
+    // GR/VA usan el padrón de mesas: popup genérico con nombre/circuito/mesas/electores.
+    if (layerName === 'Escuelas' && MapUtils.hasSchoolLevelFields(feature.properties)) {
       // Agrupar todos los campos relacionados con cada nivel
       const infantes = (Number(feature.properties.nvcjinfantes) || 0) + 
                       (Number(feature.properties.nvcjmaternal) || 0) +
@@ -454,6 +463,18 @@ class MapUtils {
         opacity: 0.8
       };
     } else if (layerName === 'Escuelas') {
+      if (!MapUtils.hasSchoolLevelFields(feature.properties)) {
+        const color = COLOR_PALETTES.escuelas.default || '#1976D2';
+        return {
+          color: color,
+          fillColor: color,
+          weight: 2,
+          fillOpacity: 0.7,
+          opacity: 0.9,
+          radius: 8
+        };
+      }
+
       // Lógica simplificada para escuelas - agrupar todos los campos relacionados
       const infantes = (Number(feature.properties.nvcjinfantes) || 0) + 
                       (Number(feature.properties.nvcjmaternal) || 0) +

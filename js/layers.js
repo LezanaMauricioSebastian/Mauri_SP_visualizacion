@@ -201,28 +201,31 @@ class LayerManager {
     return clusterGroup;
   }
 
-  // Crear capa de escuelas con círculos coloreados
+  // Crear capa de escuelas con círculos coloreados (Point y MultiPoint)
   createSchoolLayer(geojson, layerConfig, layerName) {
     const schoolLayer = L.layerGroup();
     const currentCity = this.mapManager.getCurrentCity();
 
     geojson.features.forEach((feature) => {
       try {
-        const latlng = this.extractLatLng(feature.geometry);
-        if (!latlng) return;
+        const points = this.extractAllLatLngs(feature.geometry);
+        if (!points.length) return;
 
         const style = MapUtils.getLayerStyle(feature, layerName);
-        const circle = L.circleMarker(latlng, {
-          radius: style.radius || 8,
-          fillColor: style.fillColor,
-          color: style.color,
-          weight: style.weight || 2,
-          opacity: style.opacity || 0.9,
-          fillOpacity: style.fillOpacity || 0.7
-        });
+        points.forEach((latlng) => {
+          if (Math.abs(latlng[0]) > 90 || Math.abs(latlng[1]) > 180) return;
+          const circle = L.circleMarker(latlng, {
+            radius: style.radius || 8,
+            fillColor: style.fillColor,
+            color: style.color,
+            weight: style.weight || 2,
+            opacity: style.opacity || 0.9,
+            fillOpacity: style.fillOpacity || 0.7
+          });
 
-        MapUtils.createCustomPopup(feature, circle, layerConfig.properties, layerName, currentCity);
-        schoolLayer.addLayer(circle);
+          MapUtils.createCustomPopup(feature, circle, layerConfig.properties, layerName, currentCity);
+          schoolLayer.addLayer(circle);
+        });
       } catch (error) {
         console.warn('Error procesando escuela:', error);
       }
@@ -579,6 +582,20 @@ class LayerManager {
         });
         if (circuitos.size > 8) content += '<div style="text-align:center;color:#718096;font-size:0.75rem;">...</div>';
       } else if (layerName === 'Escuelas') {
+        const escuelasGeo = this.loadedLayers[layerName].geojson;
+        const hasLevels = !!(escuelasGeo && escuelasGeo.features &&
+          escuelasGeo.features.some((f) => MapUtils.hasSchoolLevelFields(f.properties)));
+
+        if (!hasLevels) {
+          content += `<div class="legend-item">
+            <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.default};border-radius:50%;width:12px;height:12px;"></div>
+            Escuelas (mesas electorales)
+          </div>`;
+          content += `<div style="margin-top:10px;padding:8px;background:#f8f9fa;border-radius:4px;font-size:0.8rem;color:#6c757d;">
+            <strong>Establecimientos con mesas:</strong> mismos datos que Mesas/Electores por Escuela<br>
+            <small>No es un catálogo completo de instituciones educativas</small>
+          </div>`;
+        } else {
         content += `<div class="legend-item">
           <div class="legend-color" style="background:${COLOR_PALETTES.escuelas.infantes_primario};border-radius:50%;width:12px;height:12px;"></div>
           Jardín + Primario
@@ -622,6 +639,7 @@ class LayerManager {
           <strong>Instituciones Educativas:</strong> Clasificación por tipo y niveles<br>
           <small>Incluye escuelas tradicionales e instituciones especiales</small>
         </div>`;
+        }
       }
 
       div.innerHTML = content;
