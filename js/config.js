@@ -336,16 +336,10 @@ const TRANSLATIONS = {
     'nvcjinfantes': 'Jardín de Infantes',
     'nvcprimario': 'Primario',
     'nvcsecundario': 'Secundario',
-    'circuito': 'Circuito',
     'cn_mesas': 'Mesas',
     'electores': 'Electores',
     'CuentaDeNU': 'Mesas',
-    'SumaDeCuen': 'Electores',
-    'localidad': 'Localidad',
-    'cueanexo': 'CUE/Anexo',
-    'telefono': 'Teléfono',
-    'email': 'Email',
-    'ambito': 'Ámbito'
+    'SumaDeCuen': 'Electores'
   },
   'Barrios': { 'Barrio': 'Barrio', 'Municipio': 'Municipio', 'nombre': 'Nombre' },
   'Asentamientos': { 
