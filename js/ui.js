@@ -41,17 +41,24 @@ class UIManager {
         const itemDiv = this.createLayerControlItem(name, config);
         groupDiv.appendChild(itemDiv);
         
-        // Cargar conteo inicial
-        this.layerManager.loadLayer(name, config).then(count => {
+        // Conteo sin crear capas Leaflet (las pesadas usan featureCount)
+        this.layerManager.getFeatureCount(name, config).then(count => {
           const countSpan = itemDiv.querySelector('.layer-count');
           if (countSpan) {
             countSpan.textContent = count.toLocaleString();
+          }
+        }).catch(() => {
+          const countSpan = itemDiv.querySelector('.layer-count');
+          if (countSpan) {
+            countSpan.textContent = '—';
           }
         });
       });
       
       controlsDiv.appendChild(groupDiv);
     });
+
+    this.layerManager.prefetchIdleLayerData();
   }
 
   // Crear item de control individual
@@ -88,14 +95,30 @@ class UIManager {
   // Manejar toggle de capas
   async handleLayerToggle(checkbox, name, config, countSpan) {
     if (checkbox.checked) {
+      const cityWhenStarted = this.mapManager.getCurrentCity();
+      const stillCurrent = () => (
+        checkbox.checked && this.mapManager.getCurrentCity() === cityWhenStarted
+      );
       const loadedLayers = this.layerManager.getLoadedLayers();
       if (!loadedLayers[name]) {
         countSpan.textContent = 'Cargando...';
-        const count = await this.layerManager.loadLayer(name, config);
-        countSpan.textContent = count.toLocaleString();
+        try {
+          const count = await this.layerManager.loadLayer(name, config);
+          if (!stillCurrent()) {
+            if (typeof count === 'number') countSpan.textContent = count.toLocaleString();
+            return;
+          }
+          countSpan.textContent = count.toLocaleString();
+        } catch (error) {
+          if (!stillCurrent() || (error && error.message === 'Layer load cancelled')) return;
+          checkbox.checked = false;
+          countSpan.textContent = 'Error';
+          return;
+        }
       }
-      
-      this.layerManager.addLayerToMap(name);
+
+      if (!stillCurrent()) return;
+      await this.layerManager.addLayerToMap(name);
     } else {
       this.layerManager.removeLayerFromMap(name);
     }
@@ -137,4 +160,4 @@ class UIManager {
     this.createLayerControls();
     this.setupEventListeners();
   }
-} 
+}

@@ -68,8 +68,19 @@ class MapUtils {
     return palette[Math.abs(hash) % palette.length];
   }
 
-  // Crear popup personalizado
-  static createCustomPopup(feature, layer, properties, layerName, currentCity) {
+  static getNeighborhoodKey(properties) {
+    if (!properties) return 'Sin nombre';
+    const name = properties.nombre || properties.Barrio || 'Sin nombre';
+    const municipio = properties.Municipio || properties.municipio || '';
+    const id = properties.ID != null ? properties.ID : (properties.id != null ? properties.id : '');
+    if (municipio && id !== '') return `${name}::${municipio}::${id}`;
+    if (municipio) return `${name}::${municipio}`;
+    if (id !== '') return `${name}::${id}`;
+    return String(name);
+  }
+
+  // HTML del popup (se evalúa al abrir, así los conteos de Barrios quedan frescos)
+  static buildPopupContent(feature, properties, layerName, currentCity) {
     let content = `<div class="popup-title"><i class="${CITIES_CONFIG[currentCity].layers[layerName].icon}"></i> ${layerName}</div>`;
     
     const layerTranslations = TRANSLATIONS[layerName] || {};
@@ -86,7 +97,6 @@ class MapUtils {
         varones = Number(feature.properties['Datos x _2']) || 0;
         total = Number(feature.properties['Datos x ra']) || 0;
         viviendas = Number(feature.properties['Datos x _3']) || 0;
-        console.log('Popup usando formato Saenz Peña:', { mujeres, varones, total, viviendas });
       }
       // Para Villa Ángela y Gran Resistencia
       else if (feature.properties.hasOwnProperty('2022Mujere')) {
@@ -94,10 +104,6 @@ class MapUtils {
         varones = Number(feature.properties['2022Varone']) || 0;
         total = Number(feature.properties['2022Total']) || 0;
         viviendas = Number(feature.properties['2022Total_']) || 0;
-        console.log('Popup usando formato Villa Ángela:', { mujeres, varones, total, viviendas });
-      }
-      else {
-        console.log('Popup: No se encontró formato de datos reconocido');
       }
       
       
@@ -143,12 +149,9 @@ class MapUtils {
         </div>`;
       }
       
-      return layer.bindPopup(content, {
-        className: 'custom-popup',
-        maxWidth: 300
-      });
+      return content;
     }
-    
+
     // Manejo especial para capa de escuelas
     if (layerName === 'Escuelas') {
       // Agrupar todos los campos relacionados con cada nivel
@@ -255,15 +258,20 @@ class MapUtils {
         </div>`;
       }
       
-      return layer.bindPopup(content, {
-        className: 'custom-popup',
-        maxWidth: 350
-      });
+      return content;
     }
-    
+
     // Manejo especial para barrios con contadores
     if (layerName === 'Barrios') {
-      if (feature.properties.schoolCount !== undefined) {
+      const layerManager = window.layerManager;
+      if (layerManager && feature.properties.schoolCount === undefined &&
+          feature.properties.policeCount === undefined &&
+          feature.properties.blockCount === undefined) {
+        layerManager.applyNeighborhoodCounts();
+      }
+
+      if (layerManager && layerManager.hasCountingDataset('Escuelas') &&
+          feature.properties.schoolCount !== undefined) {
         const schoolCount = feature.properties.schoolCount;
         content += `<div class="popup-item">
           <span class="popup-label">🏫 Escuelas en el barrio:</span> 
@@ -271,7 +279,8 @@ class MapUtils {
         </div>`;
       }
       
-      if (feature.properties.policeCount !== undefined) {
+      if (layerManager && layerManager.hasCountingDataset('Comisarias') &&
+          feature.properties.policeCount !== undefined) {
         const policeCount = feature.properties.policeCount;
         content += `<div class="popup-item">
           <span class="popup-label">🚔 Comisarías en el barrio:</span> 
@@ -279,7 +288,8 @@ class MapUtils {
         </div>`;
       }
       
-      if (feature.properties.blockCount !== undefined) {
+      if (layerManager && layerManager.hasCountingDataset('Manzanas_Puntos') &&
+          feature.properties.blockCount !== undefined) {
         const blockCount = feature.properties.blockCount;
         content += `<div class="popup-item">
           <span class="popup-label">🏘️ Manzanas en el barrio:</span> 
@@ -310,9 +320,14 @@ class MapUtils {
       }
     });
     
-    layer.bindPopup(content, {
+    return content;
+  }
+
+  static createCustomPopup(feature, layer, properties, layerName, currentCity) {
+    const maxWidth = layerName === 'Escuelas' ? 350 : 300;
+    layer.bindPopup(() => MapUtils.buildPopupContent(feature, properties, layerName, currentCity), {
       className: 'custom-popup',
-      maxWidth: 300
+      maxWidth
     });
   }
 
@@ -362,20 +377,13 @@ class MapUtils {
         if (feature.properties.hasOwnProperty('Datos x _1')) {
           mujeres = Number(feature.properties['Datos x _1']) || 0;
           varones = Number(feature.properties['Datos x _2']) || 0;
-          console.log('Usando formato Saenz Peña:', { mujeres, varones });
         }
         // Para Villa Ángela y Gran Resistencia
         else if (feature.properties.hasOwnProperty('2022Mujere')) {
           mujeres = Number(feature.properties['2022Mujere']) || 0;
           varones = Number(feature.properties['2022Varone']) || 0;
-          console.log('Usando formato Villa Ángela:', { mujeres, varones });
         }
-        else {
-          console.log('No se encontró formato de datos reconocido');
-        }
-        
-        console.log('Valores finales:', { mujeres, varones, total: mujeres + varones });
-        
+
         let color = COLOR_PALETTES.genero.sin_datos;
         
         if (mujeres > 0 || varones > 0) {
@@ -413,53 +421,16 @@ class MapUtils {
         };
       }
     } else if (layerName === 'Barrios') {
-      const nombreBarrio = feature.properties.nombre || feature.properties.Barrio;
-      
-      // Verificar si hay escuelas cargadas para mostrar contador
-      const layerManager = window.layerManager; // Acceso global al layer manager
-      let schoolCount = 0;
-      
-      console.log('🔍 Debug barrio:', nombreBarrio, 'layerManager:', !!layerManager);
-      if (layerManager) {
-        console.log('📋 Capas cargadas:', Object.keys(layerManager.getLoadedLayers()));
+      const nombreBarrio = MapUtils.getNeighborhoodKey(feature.properties);
+      const layerManager = window.layerManager;
+      // Contar una sola vez (cacheado). No exige que Escuelas/Comisarías estén visibles.
+      if (layerManager &&
+          feature.properties.schoolCount === undefined &&
+          feature.properties.policeCount === undefined &&
+          feature.properties.blockCount === undefined) {
+        layerManager.applyNeighborhoodCounts();
       }
-      
-      if (layerManager && layerManager.getLoadedLayers()['Escuelas']) {
-        console.log('📚 Contando escuelas para barrio:', nombreBarrio);
-        const schoolCounts = layerManager.countSchoolsPerNeighborhood();
-        if (schoolCounts) {
-          schoolCount = schoolCounts[nombreBarrio] || 0;
-          console.log('📚 Escuelas encontradas:', schoolCount);
-        }
-      }
-      
-      // Contar comisarías si la capa está cargada
-      let policeCount = 0;
-      if (layerManager && layerManager.getLoadedLayers()['Comisarias']) {
-        const policeCounts = layerManager.countPoliceStationsPerNeighborhood();
-        if (policeCounts) {
-          policeCount = policeCounts[nombreBarrio] || 0;
-        }
-      }
-      
-      // Contar manzanas (siempre disponible cuando se activa Barrios)
-      let blockCount = 0;
-      if (layerManager && layerManager.getLoadedLayers()['Manzanas_Puntos']) {
-        console.log('🏘️ Contando manzanas para barrio:', nombreBarrio);
-        const blockCounts = layerManager.countBlocksPerNeighborhood();
-        if (blockCounts) {
-          blockCount = blockCounts[nombreBarrio] || 0;
-          console.log('🏘️ Manzanas encontradas:', blockCount);
-        }
-      } else {
-        console.log('🏘️ Capa de Manzanas_Puntos no cargada');
-      }
-      
-      // Agregar los contadores como propiedades del feature
-      feature.properties.schoolCount = schoolCount;
-      feature.properties.policeCount = policeCount;
-      feature.properties.blockCount = blockCount;
-      
+
       return {
         color: MapUtils.getColorByHash(nombreBarrio, COLOR_PALETTES.barrios),
         weight: 2,

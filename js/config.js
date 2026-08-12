@@ -10,7 +10,9 @@ const CITIES_CONFIG = {
         file: 'calles_2024_sp_corregido.geojson',
         properties: ['name', 'superclas'],
         icon: 'fas fa-road',
-        group: 'Infraestructura'
+        group: 'Infraestructura',
+        heavy: true,
+        featureCount: 5822
       },
       'Barrios': {
         file: 'barrios_sp.geojson',
@@ -40,7 +42,9 @@ const CITIES_CONFIG = {
         file: 'mzas_poly_22_sp.geojson',
         properties: ['DFRM','AREA'],
         icon: 'fas fa-th',
-        group: 'Divisiones'
+        group: 'Divisiones',
+        heavy: true,
+        featureCount: 1963
       },
       'Manzanas_Puntos': {
         file: 'mzas_point_22_sp.geojson',
@@ -87,7 +91,9 @@ const CITIES_CONFIG = {
         file: 'Edificaciones_2024_Siluetas.geojson',
         properties: ['area', 'full_plus_code'],
         icon: 'fas fa-building',
-        group: 'Infraestructura'
+        group: 'Infraestructura',
+        heavy: true,
+        featureCount: 91799
       }
     }
   },
@@ -101,7 +107,9 @@ const CITIES_CONFIG = {
         file: 'calles_2024_amgr.geojson',
         properties: ['name', 'superclas'],
         icon: 'fas fa-road',
-        group: 'Infraestructura'
+        group: 'Infraestructura',
+        heavy: true,
+        featureCount: 13526
       },
       'Barrios': {
         file: 'barrios_amgr.geojson',
@@ -125,7 +133,9 @@ const CITIES_CONFIG = {
         file: 'manzanero_amgr.geojson',
         properties: ['PDLFRM','AREA'],
         icon: 'fas fa-th',
-        group: 'Divisiones'
+        group: 'Divisiones',
+        heavy: true,
+        featureCount: 6824
       },
       'Circuito electoral': {
         file: 'circuitos_elect_amgr.geojson',
@@ -173,7 +183,9 @@ const CITIES_CONFIG = {
         file: 'calles_2024_va.geojson',
         properties: ['name', 'superclas'],
         icon: 'fas fa-road',
-        group: 'Infraestructura'
+        group: 'Infraestructura',
+        heavy: true,
+        featureCount: 3356
       },
       'Asentamientos': {
         file: 'asentamientos_va.geojson',
@@ -191,7 +203,9 @@ const CITIES_CONFIG = {
         file: 'mzas_poligonos_22_va.geojson',
         properties: ['DFRM','AREA'],
         icon: 'fas fa-th',
-        group: 'Divisiones'
+        group: 'Divisiones',
+        heavy: true,
+        featureCount: 1054
       },
       'Circuito electoral': {
         file: 'circuitos_electoral_va.geojson',
@@ -223,6 +237,8 @@ const CITIES_CONFIG = {
       },
       'Población por Radio': {
         file: 'radios_censo_va.geojson',
+        joinFile: 'cant_viv_radio_va.geojson',
+        joinProperty: 'LINK',
         properties: ['AREA', 'LINK', '2022Total', '2022Mujere', '2022Varone','2022Total_'],
         icon: 'fas fa-users',
         group: 'Censo'
@@ -231,7 +247,9 @@ const CITIES_CONFIG = {
         file: 'Edificaciones_2024_Siluetas_va.geojson',
         properties: [ 'area_in_me', 'full_plus_'],
         icon: 'fas fa-building',
-        group: 'Infraestructura'
+        group: 'Infraestructura',
+        heavy: true,
+        featureCount: 33854
       }
     }
   }
@@ -258,7 +276,7 @@ const COLOR_PALETTES = {
   ],
   asentamientos: [
     '#8e44ad', '#e74c3c', '#f39c12', '#27ae60', '#3498db', '#e67e22',
-    '#9b59b6', '#1abc9c', '#34495e', '#f1c40f', '#e8b39', '#c0392b'
+    '#9b59b6', '#1abc9c', '#34495e', '#f1c40f', '#e8b390', '#c0392b'
   ],
   calles: {
     'pavimentado': '#2196F3',
@@ -347,7 +365,6 @@ const TRANSLATIONS = {
     '2022Total': 'Población total',
     '2022Mujere': 'Mujeres',
     '2022Varone': 'Varones',
-    '2022Total': 'Total',
     '2022Total_': 'Viviendas',
     '2022Casa': 'Casas',
     '2022Rancho': 'Ranchos',
