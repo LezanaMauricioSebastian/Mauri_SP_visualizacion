@@ -153,6 +153,34 @@ class UIManager {
     document.querySelectorAll('.city-option').forEach(btn => {
       btn.addEventListener('click', () => this.switchCity(btn.dataset.city));
     });
+    this.setupPanelCollapse();
+  }
+
+  setupPanelCollapse() {
+    const panel = document.getElementById('controls-panel');
+    const btn = document.getElementById('controls-collapse-btn');
+    if (!panel || !btn) return;
+
+    const apply = (collapsed) => {
+      panel.classList.toggle('collapsed', collapsed);
+      btn.setAttribute('aria-expanded', String(!collapsed));
+      btn.setAttribute('title', collapsed ? 'Expandir' : 'Contraer');
+    };
+
+    let collapsed = false;
+    try {
+      collapsed = localStorage.getItem('mauri_sp_layers_collapsed') === '1';
+    } catch (e) { /* ignore */ }
+
+    apply(collapsed);
+
+    btn.addEventListener('click', () => {
+      const next = !panel.classList.contains('collapsed');
+      apply(next);
+      try {
+        localStorage.setItem('mauri_sp_layers_collapsed', next ? '1' : '0');
+      } catch (e) { /* ignore */ }
+    });
   }
 
   // Inicializar interfaz

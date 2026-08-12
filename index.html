@@ -21,7 +21,7 @@
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Estilos personalizados -->
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=2">
 </head>
 <body>
   <header class="header">
@@ -51,10 +51,11 @@
     </div>
     <div id="map"></div>
     <div class="controls-panel" id="controls-panel">
-      <div class="controls-header">
-        <i class="fas fa-layer-group"></i>
+      <button type="button" class="controls-header" id="controls-collapse-btn" aria-expanded="true" aria-controls="layer-controls" title="Contraer">
+        <i class="fas fa-layer-group" aria-hidden="true"></i>
         <h3>Capas del Mapa</h3>
-      </div>
+        <i class="fas fa-chevron-up panel-chevron" aria-hidden="true"></i>
+      </button>
       <div id="layer-controls"></div>
     </div>
   </div>
@@ -66,8 +67,10 @@
   <!-- Módulos de la aplicación -->
   <script src="js/config.js?v=9"></script>
   <script src="js/map.js?v=7"></script>
-  <script src="js/layers.js?v=5"></script>
-  <script src="js/ui.js?v=3"></script>
+  <script src="js/spatial.js?v=1"></script>
+  <script src="js/legends.js?v=2"></script>
+  <script src="js/layers.js?v=6"></script>
+  <script src="js/ui.js?v=4"></script>
   <script src="js/app.js?v=2"></script>
 </body>
 </html>
