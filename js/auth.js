@@ -62,8 +62,14 @@ class AuthGate {
     }
 
     this.clerk = window.Clerk;
+    // Keep users on this app after sign-in (avoid Dashboard "Home URL" → github.io 404).
+    this.afterAuthUrl = `${window.location.origin}${window.location.pathname || '/'}`;
     await this.clerk.load({
       ui: { ClerkUI: window.__internal_ClerkUICtor },
+      signInForceRedirectUrl: this.afterAuthUrl,
+      signUpForceRedirectUrl: this.afterAuthUrl,
+      signInFallbackRedirectUrl: this.afterAuthUrl,
+      signUpFallbackRedirectUrl: this.afterAuthUrl,
     });
 
     this.clerk.addListener(({ user }) => {
@@ -124,7 +130,10 @@ class AuthGate {
       signInHost.replaceChildren();
       this.clerk.mountSignIn(signInHost, {
         routing: 'hash',
-        // Google / SSO buttons appear automatically when enabled in Dashboard.
+        forceRedirectUrl: this.afterAuthUrl,
+        fallbackRedirectUrl: this.afterAuthUrl,
+        signUpForceRedirectUrl: this.afterAuthUrl,
+        signUpFallbackRedirectUrl: this.afterAuthUrl,
       });
       signInHost.dataset.mounted = 'true';
     } else if (signInHost) {
