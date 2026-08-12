@@ -21,30 +21,49 @@
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Estilos personalizados -->
-  <link rel="stylesheet" href="css/styles.css?v=4">
+  <link rel="stylesheet" href="css/styles.css?v=5">
 </head>
-<body>
+<body class="auth-locked">
   <header class="header">
     <div class="header-content">
       <div class="logo">
         <i class="fas fa-map-marked-alt"></i>
         <h1>Mapa Interactivo del Chaco</h1>
       </div>
-      <div class="city-selector">
-        <button type="button" class="city-option active" data-city="sp">
-          <i class="fas fa-city"></i> Presidencia Roque S. Peña
-        </button>
-        <button type="button" class="city-option" data-city="gr">
-          <i class="fas fa-building"></i> Gran Resistencia
-        </button>
-        <button type="button" class="city-option" data-city="va">
-          <i class="fas fa-tree"></i> Villa Ángela
-        </button>
+      <div class="header-actions">
+        <div class="city-selector" id="city-selector">
+          <button type="button" class="city-option active" data-city="sp">
+            <i class="fas fa-city"></i> Presidencia Roque S. Peña
+          </button>
+          <button type="button" class="city-option" data-city="gr">
+            <i class="fas fa-building"></i> Gran Resistencia
+          </button>
+          <button type="button" class="city-option" data-city="va">
+            <i class="fas fa-tree"></i> Villa Ángela
+          </button>
+        </div>
+        <div id="clerk-user-button" class="clerk-user-button" hidden></div>
       </div>
     </div>
   </header>
 
-  <div class="map-container">
+  <div id="auth-gate" class="auth-gate">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <i class="fas fa-map-marked-alt" aria-hidden="true"></i>
+        <h2>Mapa Interactivo del Chaco</h2>
+        <p>Iniciá sesión para continuar</p>
+      </div>
+      <p id="auth-gate-error" class="auth-gate-error" hidden></p>
+      <div id="auth-loading" class="auth-loading">
+        <i class="fas fa-spinner spinner" aria-hidden="true"></i>
+        Cargando acceso...
+      </div>
+      <div id="clerk-sign-in" hidden></div>
+    </div>
+  </div>
+
+  <div class="map-container" id="map-container">
     <div class="loading" id="loading">
       <i class="fas fa-spinner spinner"></i>
       Cargando mapa...
@@ -82,6 +101,8 @@
   <!-- MarkerCluster JS -->
   <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
   <!-- Módulos de la aplicación -->
+  <script src="js/clerk-config.js?v=1"></script>
+  <script src="js/auth.js?v=3"></script>
   <script src="js/config.js?v=10"></script>
   <script src="js/map.js?v=8"></script>
   <script src="js/spatial.js?v=1"></script>
@@ -90,6 +111,6 @@
   <script src="js/layers.js?v=7"></script>
   <script src="js/ui.js?v=5"></script>
   <script src="js/questions.js?v=3"></script>
-  <script src="js/app.js?v=3"></script>
+  <script src="js/app.js?v=4"></script>
 </body>
 </html>

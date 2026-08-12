@@ -30,11 +30,28 @@ class MapApp {
   }
 }
 
-// Event listener para inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
-  const app = new MapApp();
-  app.init();
-  
-  // Hacer el layerManager accesible globalmente para las funciones de estilo
-  window.layerManager = app.layerManager;
-}); 
+document.addEventListener('DOMContentLoaded', function () {
+  const startMap = () => {
+    const app = new MapApp();
+    app.init();
+    window.layerManager = app.layerManager;
+    window.mapApp = app;
+  };
+
+  const gate = new AuthGate({
+    publishableKey: typeof CLERK_PUBLISHABLE_KEY !== 'undefined' ? CLERK_PUBLISHABLE_KEY : '',
+    onAuthenticated: startMap,
+  });
+
+  gate.init().catch((err) => {
+    console.error('Clerk auth failed', err);
+    const errorEl = document.getElementById('auth-gate-error');
+    const gateEl = document.getElementById('auth-gate');
+    if (gateEl) gateEl.hidden = false;
+    if (errorEl) {
+      errorEl.hidden = false;
+      errorEl.textContent =
+        'No se pudo iniciar Clerk. Verificá la publishable key y que este origen esté permitido en el Dashboard.';
+    }
+  });
+});
