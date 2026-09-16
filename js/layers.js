@@ -1,5 +1,6 @@
 // Módulo de manejo de capas
 const COUNTING_LAYER_NAMES = ['Escuelas', 'Comisarias', 'Manzanas_Puntos'];
+const MANZANA_BUSINESS_LAYER = 'Negocios';
 
 class LayerManager {
   constructor(mapManager) {
@@ -10,6 +11,10 @@ class LayerManager {
     this.inflightLayers = {};
     this.layerGeneration = 0;
     this.counts = new NeighborhoodCounts({
+      getGeoJSON: (name) => this.getLayerGeoJSON(name),
+      hasDataset: (name) => this.hasCountingDataset(name)
+    });
+    this.manzanaBusiness = new ManzanaBusinessCounts({
       getGeoJSON: (name) => this.getLayerGeoJSON(name),
       hasDataset: (name) => this.hasCountingDataset(name)
     });
@@ -120,10 +125,15 @@ class LayerManager {
 
   resetCountingState() {
     this.counts.reset();
+    this.manzanaBusiness.reset();
   }
 
   applyNeighborhoodCounts() {
     this.counts.apply();
+  }
+
+  applyManzanaBusinessCounts() {
+    this.manzanaBusiness.apply();
   }
 
   // Crear marcador clusterizado
@@ -203,7 +213,7 @@ class LayerManager {
     return clusterGroup;
   }
 
-  // Crear capa de escuelas con círculos coloreados (Point y MultiPoint)
+  // Crear capa de puntos (Escuelas / Negocios) con círculos coloreados
   createSchoolLayer(geojson, layerConfig, layerName) {
     const schoolLayer = L.layerGroup();
     const currentCity = this.mapManager.getCurrentCity();
@@ -229,7 +239,7 @@ class LayerManager {
           schoolLayer.addLayer(circle);
         });
       } catch (error) {
-        console.warn('Error procesando escuela:', error);
+        console.warn(`Error procesando ${layerName}:`, error);
       }
     });
 
@@ -240,6 +250,9 @@ class LayerManager {
   createStandardLayer(geojson, layerConfig, layerName) {
     if (layerName === 'Barrios') {
       this.applyNeighborhoodCounts();
+    }
+    if (layerName === 'Manzanas') {
+      this.applyManzanaBusinessCounts();
     }
 
     const currentCity = this.mapManager.getCurrentCity();
@@ -298,10 +311,18 @@ class LayerManager {
           }
         }
 
+        if (layerName === 'Manzanas') {
+          await this.ensureManzanaBusinessData();
+          if (generation !== this.layerGeneration) {
+            throw new Error('Layer load cancelled');
+          }
+          this.applyManzanaBusinessCounts();
+        }
+
         let layer;
         if (layerConfig.type === 'clustered') {
           layer = this.createClusteredLayer(geojson, layerConfig, layerName);
-        } else if (layerName === 'Escuelas') {
+        } else if (layerName === 'Escuelas' || layerName === 'Negocios') {
           layer = this.createSchoolLayer(geojson, layerConfig, layerName);
         } else {
           layer = this.createStandardLayer(geojson, layerConfig, layerName);
@@ -324,6 +345,11 @@ class LayerManager {
           geojson: geojson,
           config: layerConfig
         };
+
+        if (layerName === 'Negocios' && this.getLayerGeoJSON('Manzanas')) {
+          this.manzanaBusiness.cache.businesses = null;
+          this.applyManzanaBusinessCounts();
+        }
 
         return geojson.features.length;
       } catch (error) {
@@ -445,6 +471,17 @@ class LayerManager {
     this.applyNeighborhoodCounts();
     this.refreshBarriosLayer();
     this.countingCalculated = true;
+  }
+
+  async ensureManzanaBusinessData() {
+    const currentCity = this.mapManager.getCurrentCity();
+    const config = CITIES_CONFIG[currentCity] && CITIES_CONFIG[currentCity].layers[MANZANA_BUSINESS_LAYER];
+    if (!config) return;
+    try {
+      await this.fetchGeoJSON(config.file);
+    } catch (error) {
+      console.warn('Error cargando datos de Negocios para conteo por manzana:', error);
+    }
   }
 
   // Descargar las capas de conteo

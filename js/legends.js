@@ -249,6 +249,15 @@ class LegendManager {
             : 'Incluye escuelas tradicionales e instituciones especiales'}</small>
         </div>`;
         }
+      } else if (layerName === 'Negocios') {
+        body += `<div class="legend-item">
+          <div class="legend-color" style="background:#2E7D32;border-radius:50%;width:12px;height:12px;"></div>
+          Negocios (OSM)
+        </div>`;
+        body += `<div style="margin-top:10px;padding:8px;background:#f8f9fa;border-radius:4px;font-size:0.8rem;color:#6c757d;">
+          <strong>Fuente:</strong> OpenStreetMap (Overpass)<br>
+          <small>Cobertura incompleta: son POIs mapeados, no un padrón comercial completo</small>
+        </div>`;
       }
 
       content += `<div class="legend-body" id="legend-body">${body}</div>`;

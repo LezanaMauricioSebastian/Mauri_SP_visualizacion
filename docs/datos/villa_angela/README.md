@@ -9,6 +9,7 @@ Villa Ángela (`va`). `dataPath`: `datos/villa_angela/`.
 | `calles_2024_va.geojson` | Calles | MultiLineString | `name`, `superclas` (~3356, heavy) |
 | `asentamientos_va.geojson` | Asentamientos | MultiPolygon | RENABAP: `nombre_bar`, `municipio`, services, `superficie`, … |
 | `lugares_publicos_va.geojson` | Lugares públicos | Polygon | `leisure`, `name` |
+| `negocios_osm_va.geojson` | Negocios | Point | OSM Overpass shops/amenities/offices (~50). Regenerar con `scripts/fetch_negocios_osm.py` |
 | `escuelas_va_enriquecido.geojson` | Escuelas | MultiPoint | mesas + padrón (~16) |
 | `mzas_poligonos_22_va.geojson` | Manzanas | Polygon | `DFRM`, `AREA` (~1054, heavy) |
 | `circuitos_electoral_va.geojson` | Circuito electoral | MultiPolygon | `CIRC`, `CIRCUITO`, `MUNICIPIO` |
@@ -26,6 +27,8 @@ Villa Ángela (`va`). `dataPath`: `datos/villa_angela/`.
 ## No Barrios layer
 
 VA has no `Barrios` entry in config. Neighborhood counting (`schoolCount` / etc.) never runs. Escuelas still style/popup using padrón level fields.
+
+Loading **Manzanas** still prefetches **Negocios** and shows **Negocios (OSM)** in the manzana popup.
 
 ## Files on disk but not referenced in config
 

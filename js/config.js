@@ -26,6 +26,13 @@ const CITIES_CONFIG = {
         icon: 'fas fa-tree',
         group: 'Servicios'
       },
+      'Negocios': {
+        file: 'negocios_osm_sp.geojson',
+        properties: ['name', 'tipo', 'shop', 'amenity'],
+        icon: 'fas fa-store',
+        group: 'Servicios',
+        featureCount: 98
+      },
       'Escuelas':{
         file: 'escuelas_sp_completo.geojson',
         properties: ['nombre', 'domicilio', 'sector', 'nvcjinfantes', 'nvcprimario', 'nvcsecundario'],
@@ -136,6 +143,14 @@ const CITIES_CONFIG = {
         icon: 'fas fa-tree',
         group: 'Servicios'
       },
+      'Negocios': {
+        file: 'negocios_osm_amgr.geojson',
+        properties: ['name', 'tipo', 'shop', 'amenity'],
+        icon: 'fas fa-store',
+        group: 'Servicios',
+        heavy: true,
+        featureCount: 6040
+      },
       'Escuelas': {
         file: 'escuelas_amgr_enriquecido.geojson',
         properties: ['nombre', 'domicilio', 'sector', 'nvcjinfantes', 'nvcprimario', 'nvcsecundario'],
@@ -219,6 +234,13 @@ const CITIES_CONFIG = {
         properties: ['leisure', 'name'],
         icon: 'fas fa-tree',
         group: 'Servicios'
+      },
+      'Negocios': {
+        file: 'negocios_osm_va.geojson',
+        properties: ['name', 'tipo', 'shop', 'amenity'],
+        icon: 'fas fa-store',
+        group: 'Servicios',
+        featureCount: 50
       },
       'Escuelas': {
         file: 'escuelas_va_enriquecido.geojson',
@@ -386,6 +408,13 @@ const TRANSLATIONS = {
 
   },
   'Lugares públicos': { 'leisure': 'Tipo', 'name': 'Nombre' },
+  'Negocios': {
+    'name': 'Nombre',
+    'tipo': 'Tipo (OSM)',
+    'shop': 'Shop',
+    'amenity': 'Amenity',
+    'office': 'Office'
+  },
   'Escuelas': { 
     'nombre': 'Nombre', 
     'domicilio': 'Domicilio', 

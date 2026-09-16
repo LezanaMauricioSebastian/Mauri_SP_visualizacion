@@ -10,6 +10,7 @@ Gran Resistencia / Área Metropolitana (`gr`). `dataPath`: `datos/gran_Resis/`.
 | `barrios_amgr.geojson` | Barrios | MultiPolygon | `Barrio`, `Municipio`, `ID` |
 | `asentamientos_amgr.geojson` | Asentamientos | MultiPolygon | `Barrios`, `Municipio` |
 | `lugares_publicos_amgr.geojson` | Lugares públicos | MultiPolygon / Polygon | OSM `leisure`, `name` |
+| `negocios_osm_amgr.geojson` | Negocios | Point | OSM Overpass shops/amenities/offices (~6040, heavy). Regenerar con `scripts/fetch_negocios_osm.py` |
 | `escuelas_amgr_enriquecido.geojson` | Escuelas | MultiPoint | mesas fields + padrón levels / `fuente_padron` (~142) |
 | `manzanero_amgr.geojson` | Manzanas | MultiPolygon | `PDLFRM`, `AREA` (~6824, heavy) |
 | `circuitos_elect_amgr.geojson` | Circuito electoral | MultiPolygon | `circuito`, `cabecera`, `departamen` |
@@ -23,6 +24,8 @@ Gran Resistencia / Área Metropolitana (`gr`). `dataPath`: `datos/gran_Resis/`.
 ## Counting
 
 Barrios exist, so school counts can run once Escuelas GeoJSON is cached. No **Comisarias** or **Manzanas_Puntos** layers → police/block rows never appear (`hasCountingDataset` is false).
+
+Loading **Manzanas** prefetches **Negocios** and shows **Negocios (OSM)** in the manzana popup (point-in-polygon; incomplete OSM coverage).
 
 ## Related
 

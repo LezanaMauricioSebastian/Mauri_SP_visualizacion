@@ -77,12 +77,20 @@ const SpatialUtils = {
   },
 
   buildNeighborhoodIndex(geo) {
+    return SpatialUtils.buildPolygonIndex(geo, (properties) => MapUtils.getNeighborhoodKey(properties));
+  },
+
+  buildManzanaIndex(geo) {
+    return SpatialUtils.buildPolygonIndex(geo, (properties) => MapUtils.getManzanaKey(properties));
+  },
+
+  buildPolygonIndex(geo, keyFn) {
     if (!geo) return null;
 
-    return geo.features.map((neighborhood) => {
-      const key = MapUtils.getNeighborhoodKey(neighborhood.properties);
+    return geo.features.map((feature) => {
+      const key = keyFn(feature.properties);
       const rings = [];
-      const geom = neighborhood.geometry;
+      const geom = feature.geometry;
       if (!geom) return { key, rings };
 
       let polygons = [];
@@ -113,6 +121,10 @@ const SpatialUtils = {
   },
 
   countPointsInNeighborhoods(features, index) {
+    return SpatialUtils.countPointsInPolygons(features, index);
+  },
+
+  countPointsInPolygons(features, index) {
     if (!index || !features) return null;
 
     const counts = {};
@@ -127,12 +139,12 @@ const SpatialUtils = {
         const lat = pt[0];
         const lng = pt[1];
 
-        // Recorre de atrás hacia adelante para preservar "último barrio gana" si hay solape.
+        // Recorre de atrás hacia adelante para preservar "último polígono gana" si hay solape.
         for (let n = index.length - 1; n >= 0; n--) {
-          const neighborhood = index[n];
+          const polygon = index[n];
           let inside = false;
-          for (let r = 0; r < neighborhood.rings.length; r++) {
-            const ring = neighborhood.rings[r];
+          for (let r = 0; r < polygon.rings.length; r++) {
+            const ring = polygon.rings[r];
             if (lat < ring.minLat || lat > ring.maxLat || lng < ring.minLng || lng > ring.maxLng) {
               continue;
             }
@@ -152,7 +164,7 @@ const SpatialUtils = {
             }
           }
           if (inside) {
-            counts[neighborhood.key]++;
+            counts[polygon.key]++;
             break;
           }
         }
@@ -234,5 +246,51 @@ class NeighborhoodCounts {
       if (policeCounts) feature.properties.policeCount = policeCounts[key] || 0;
       if (blockCounts) feature.properties.blockCount = blockCounts[key] || 0;
     }
+  }
+}
+
+class ManzanaBusinessCounts {
+  constructor({ getGeoJSON, hasDataset }) {
+    this.getGeoJSON = getGeoJSON;
+    this.hasDataset = hasDataset;
+    this.reset();
+  }
+
+  reset() {
+    this.calculated = false;
+    this.cache = { businesses: null };
+    this.index = null;
+  }
+
+  getIndex() {
+    if (this.index) return this.index;
+    this.index = SpatialUtils.buildManzanaIndex(this.getGeoJSON('Manzanas'));
+    return this.index;
+  }
+
+  countBusinessesPerManzana() {
+    if (this.cache.businesses) return this.cache.businesses;
+    const businesses = this.getGeoJSON('Negocios');
+    const manzanas = this.getGeoJSON('Manzanas');
+    if (!businesses || !manzanas) return null;
+    this.cache.businesses = SpatialUtils.countPointsInPolygons(businesses.features, this.getIndex());
+    return this.cache.businesses;
+  }
+
+  apply() {
+    const manzanas = this.getGeoJSON('Manzanas');
+    if (!manzanas) return;
+    if (!this.hasDataset('Negocios')) return;
+
+    const businessCounts = this.countBusinessesPerManzana();
+    if (!businessCounts) return;
+
+    for (let i = 0; i < manzanas.features.length; i++) {
+      const feature = manzanas.features[i];
+      if (!feature.properties) feature.properties = {};
+      const key = MapUtils.getManzanaKey(feature.properties);
+      feature.properties.negocioCount = businessCounts[key] || 0;
+    }
+    this.calculated = true;
   }
 }

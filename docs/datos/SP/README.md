@@ -9,6 +9,7 @@ Presidencia Roque Sáenz Peña (`sp`). `dataPath`: `datos/SP/`.
 | `calles_2024_sp_corregido.geojson` | Calles | MultiLineString | `name`, `superclas`, `highway`, `surface` (~5822) |
 | `barrios_sp.geojson` | Barrios | MultiPolygon | `id`, `nombre` |
 | `lugares_publicos_sp.geojson` | Lugares públicos | Polygon | OSM `leisure`, `name` |
+| `negocios_osm_sp.geojson` | Negocios | Point | OSM Overpass shops/amenities/offices; `name`, `tipo` (~98). Regenerar con `scripts/fetch_negocios_osm.py` |
 | `escuelas_sp_completo.geojson` | Escuelas | MultiPoint | `nombre`, `domicilio`, `sector`, CUE, level flags (`nvcjinfantes`, …) |
 | `policia_comisarias_sp.geojson` | Comisarias | Point | `Unidad`, `Direccion`, `correo ele`, `telefono` |
 | `mzas_poly_22_sp.geojson` | Manzanas | MultiPolygon | `DFRM`, `AREA` (~1963) |
@@ -22,6 +23,8 @@ Presidencia Roque Sáenz Peña (`sp`). `dataPath`: `datos/SP/`.
 ## Neighborhood counting (SP only has the full set)
 
 Enabling **Barrios** prefetches Escuelas + Comisarias + Manzanas_Puntos GeoJSON. Popups can show escuelas, comisarías, and manzanas per barrio.
+
+Enabling **Manzanas** prefetches **Negocios** (`negocios_osm_sp.geojson`) and shows **Negocios (OSM)** per block in the popup.
 
 ## Files on disk but not referenced in config
 

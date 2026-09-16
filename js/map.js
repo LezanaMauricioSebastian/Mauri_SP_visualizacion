@@ -79,6 +79,15 @@ class MapUtils {
     return String(name);
   }
 
+  static getManzanaKey(properties) {
+    if (!properties) return 'sin-manzana';
+    if (properties['M0046-ID'] != null) return String(properties['M0046-ID']);
+    if (properties.PDLFRM != null) return String(properties.PDLFRM);
+    if (properties.DFRM != null) return String(properties.DFRM);
+    if (properties['M0046#'] != null) return String(properties['M0046#']);
+    return 'sin-manzana';
+  }
+
   static hasSchoolLevelFields(properties) {
     if (!properties) return false;
     return Object.prototype.hasOwnProperty.call(properties, 'nvcjinfantes') ||
@@ -313,6 +322,20 @@ class MapUtils {
         </div>`;
       }
     }
+
+    if (layerName === 'Manzanas') {
+      const layerManager = window.layerManager;
+      if (layerManager && feature.properties.negocioCount === undefined) {
+        layerManager.applyManzanaBusinessCounts();
+      }
+      if (layerManager && layerManager.hasCountingDataset('Negocios') &&
+          feature.properties.negocioCount !== undefined) {
+        content += `<div class="popup-item">
+          <span class="popup-label">🏪 Negocios (OSM):</span>
+          <span class="popup-value">${feature.properties.negocioCount}</span>
+        </div>`;
+      }
+    }
     
     // Para otras capas, usar el comportamiento estándar
     properties.forEach(prop => {
@@ -324,6 +347,9 @@ class MapUtils {
       }
       if (layerName === 'Calles' && prop === 'superclas'  && value === 'desconocido') {
         value = "No pavimento";
+      }
+      if (layerName === 'Negocios' && prop === 'name' && (!value || value === "")) {
+        value = "Sin nombre";
       }
       
       const label = layerTranslations[prop] || prop;
@@ -468,6 +494,16 @@ class MapUtils {
         weight: 2,
         fillOpacity: 0.4,
         opacity: 0.8
+      };
+    } else if (layerName === 'Negocios') {
+      const color = '#2E7D32';
+      return {
+        color: color,
+        fillColor: color,
+        weight: 2,
+        fillOpacity: 0.75,
+        opacity: 0.9,
+        radius: 6
       };
     } else if (layerName === 'Escuelas') {
       if (!MapUtils.hasSchoolLevelFields(feature.properties)) {

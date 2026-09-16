@@ -22,6 +22,7 @@ GeoJSON FeatureCollections (CRS84 / WGS84) served as static files. Paths come fr
 | Barrios | MultiPolygon | SP: `nombre`; GR: `Barrio` + `Municipio` |
 | Asentamientos | MultiPolygon | GR + VA only |
 | Lugares públicos | Polygon / MultiPolygon | OSM `leisure` + `name` |
+| Negocios | Point | OSM Overpass `shop` / commercial `amenity` / `office` (incomplete coverage) |
 | Escuelas | Point / MultiPoint | SP full catalog; GR/VA enriched mesas |
 | Comisarias | Point | SP only |
 | Manzanas | Polygon / MultiPolygon | census block polygons |

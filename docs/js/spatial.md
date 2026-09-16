@@ -1,11 +1,10 @@
 # js/spatial.js
 
-Spatial helpers and barrio point-in-polygon counts. ~238 lines.
-
-Two globals:
+Spatial helpers and point-in-polygon counts. Two barrio-oriented globals plus manzana business counts:
 
 - `SpatialUtils` — pure geo functions
 - `NeighborhoodCounts` — cached school / police / block counts per barrio
+- `ManzanaBusinessCounts` — cached OSM business counts per manzana
 
 No centroid, distance, or `toRadians` helpers (removed in the split).
 
@@ -25,7 +24,7 @@ First valid point from `extractAllLatLngs`, or `null`. Used by clustered Mesas/E
 | `MultiPoint` | all valid points |
 | anything else / missing | `[]` |
 
-Used by school circle markers and by counting (each MultiPoint child is counted separately).
+Used by school/negocio circle markers and by counting (each MultiPoint child is counted separately).
 
 ### `ringToLatLng(ring)`
 
@@ -35,19 +34,17 @@ Maps a GeoJSON ring (`[lng, lat][]`) to `{ coords: [lat, lng][], minLat, maxLat,
 
 Ray-casting. `point` and `polygon` vertices are `[lat, lng]` (same axis order as `ringToLatLng`).
 
-### `buildNeighborhoodIndex(geo)`
+### `buildPolygonIndex(geo, keyFn)`
 
-From Barrios `FeatureCollection`, one index entry per feature:
+Generic polygon index. One entry per feature: `{ key: keyFn(properties), rings: [...] }`. Supports `Polygon` / `MultiPolygon` with holes.
 
-```
-{ key: MapUtils.getNeighborhoodKey(properties), rings: [{ coords, min*, max*, holes }] }
-```
+### `buildNeighborhoodIndex(geo)` / `buildManzanaIndex(geo)`
 
-Supports `Polygon` and `MultiPolygon`. Outer ring + hole rings. `key` matches popup/style identity.
+Wrappers using `MapUtils.getNeighborhoodKey` and `MapUtils.getManzanaKey` (`M0046-ID` / `PDLFRM` / `DFRM`).
 
-### `countPointsInNeighborhoods(features, index)`
+### `countPointsInPolygons(features, index)` / `countPointsInNeighborhoods(...)`
 
-For each point of each feature, walk neighborhoods **from last to first** (last overlapping barrio wins). Bbox reject, then `isPointInPolygon` on outer ring, skip if inside a hole. Increments `counts[key]`. Returns `{ [neighborhoodKey]: number }` or `null` if index/features missing.
+For each point of each feature, walk polygons **from last to first** (last overlapping wins). Bbox reject, then outer ring, skip holes. Returns `{ [key]: number }` or `null`.
 
 ## `NeighborhoodCounts`
 
@@ -72,19 +69,28 @@ new NeighborhoodCounts({
 |--------|----------|
 | `reset()` | `calculated = false`, empty cache, `index = null` |
 | `getIndex()` | Build/cache neighborhood index from Barrios GeoJSON |
-| `countSchoolsPerNeighborhood()` | Cache `SpatialUtils.countPointsInNeighborhoods(Escuelas, index)` |
+| `countSchoolsPerNeighborhood()` | Cache `countPointsInNeighborhoods(Escuelas, index)` |
 | `countPoliceStationsPerNeighborhood()` | Same for **Comisarias** |
 | `countBlocksPerNeighborhood()` | Same for **Manzanas_Puntos** |
-| `apply()` | If Barrios GeoJSON exists and at least one counting dataset is present, write `schoolCount` / `policeCount` / `blockCount` onto each barrio `feature.properties` (0 if key missing) |
+| `apply()` | Write `schoolCount` / `policeCount` / `blockCount` onto barrio features |
 
-`apply()` does not require Escuelas/Comisarias to be **visible** — only that their GeoJSON is available (`hasDataset` / `getGeoJSON`). That is why Barrios-only can still show `Escuelas en el barrio: 0` after `loadCountingLayers` has fetched the files.
+## `ManzanaBusinessCounts`
+
+Same inject pattern as `NeighborhoodCounts`. When **Manzanas** loads, `LayerManager.ensureManzanaBusinessData()` fetches **Negocios** GeoJSON, then `apply()` writes `negocioCount` onto each manzana feature. Popup label: **Negocios (OSM)**.
+
+| Method | Behavior |
+|--------|----------|
+| `reset()` | Clear cache + manzana index |
+| `countBusinessesPerManzana()` | `countPointsInPolygons(Negocios, manzanaIndex)` |
+| `apply()` | Set `feature.properties.negocioCount` |
 
 ## Who calls what
 
 - `LayerManager.createClusteredLayer` / `createSchoolLayer` → `extractLatLng` / `extractAllLatLngs`
 - `LayerManager.applyNeighborhoodCounts` → `counts.apply()`
-- `MapUtils.buildPopupContent` / `getLayerStyle` (Barrios) → `window.layerManager.applyNeighborhoodCounts()` then read properties
-- City switch / Barrios off → `counts.reset()`
+- `LayerManager.applyManzanaBusinessCounts` → `manzanaBusiness.apply()`
+- `MapUtils.buildPopupContent` (Barrios / Manzanas) → apply then read properties
+- City switch / Barrios off → `resetCountingState()` (both counters)
 
 ## City coverage
 
@@ -94,9 +100,12 @@ new NeighborhoodCounts({
 | Escuelas points | catalog | enriched mesas | enriched mesas (unused for counts; no Barrios) |
 | Comisarias | yes | no | no |
 | Manzanas_Puntos | hidden layer | no | no |
+| Negocios (OSM) | yes | yes | yes |
+| Manzanas → negocioCount | yes | yes | yes |
 
 ## Related
 
 - [`layers.md`](layers.md) — lifecycle that loads counting GeoJSON
 - [`map.md`](map.md) — popups that display the counts
 - [`config.md`](config.md) — which cities define those layer names
+- [`../scripts/fetch_negocios_osm.md`](../scripts/fetch_negocios_osm.md) — Overpass refresh
