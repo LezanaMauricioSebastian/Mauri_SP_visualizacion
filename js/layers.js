@@ -213,7 +213,7 @@ class LayerManager {
     return clusterGroup;
   }
 
-  // Crear capa de puntos (Escuelas / Negocios) con círculos coloreados
+  // Crear capa de puntos (Escuelas) con círculos coloreados
   createSchoolLayer(geojson, layerConfig, layerName) {
     const schoolLayer = L.layerGroup();
     const currentCity = this.mapManager.getCurrentCity();
@@ -244,6 +244,46 @@ class LayerManager {
     });
 
     return schoolLayer;
+  }
+
+  // Negocios OSM: pines con iconos grandes por tipo (banco, restaurante, comercio, …)
+  createNegociosLayer(geojson, layerConfig, layerName) {
+    const currentCity = this.mapManager.getCurrentCity();
+    const useCluster = !!(layerConfig && layerConfig.heavy);
+    const layer = useCluster
+      ? L.markerClusterGroup({
+          maxClusterRadius: 55,
+          showCoverageOnHover: false,
+          iconCreateFunction: function (cluster) {
+            const count = cluster.getChildCount();
+            return L.divIcon({
+              html: `<div class="negocio-cluster">${count}</div>`,
+              className: 'negocio-cluster-icon',
+              iconSize: [40, 40]
+            });
+          }
+        })
+      : L.layerGroup();
+
+    geojson.features.forEach((feature) => {
+      try {
+        const points = SpatialUtils.extractAllLatLngs(feature.geometry);
+        if (!points.length) return;
+
+        const icon = MapUtils.createNegocioDivIcon(feature.properties);
+        points.forEach((latlng) => {
+          if (Math.abs(latlng[0]) > 90 || Math.abs(latlng[1]) > 180) return;
+          const marker = L.marker(latlng, { icon, riseOnHover: true });
+          marker.feature = feature;
+          MapUtils.createCustomPopup(feature, marker, layerConfig.properties, layerName, currentCity);
+          layer.addLayer(marker);
+        });
+      } catch (error) {
+        console.warn('Error procesando Negocios:', error);
+      }
+    });
+
+    return layer;
   }
 
   // Crear capa estándar
@@ -322,8 +362,10 @@ class LayerManager {
         let layer;
         if (layerConfig.type === 'clustered') {
           layer = this.createClusteredLayer(geojson, layerConfig, layerName);
-        } else if (layerName === 'Escuelas' || layerName === 'Negocios') {
+        } else if (layerName === 'Escuelas') {
           layer = this.createSchoolLayer(geojson, layerConfig, layerName);
+        } else if (layerName === 'Negocios') {
+          layer = this.createNegociosLayer(geojson, layerConfig, layerName);
         } else {
           layer = this.createStandardLayer(geojson, layerConfig, layerName);
         }

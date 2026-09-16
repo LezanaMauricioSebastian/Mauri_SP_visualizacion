@@ -386,6 +386,16 @@ const COLOR_PALETTES = {
     'sin_datos': '#E0E0E0'       // Gris claro
   },
   choropleth: ['#edf2ff', '#c3dafe', '#7f9cf5', '#5a67d8', '#3c366b'],
+  negocios: {
+    banco: '#1565C0',
+    restaurante: '#E65100',
+    farmacia: '#00897B',
+    combustible: '#6A1B9A',
+    comercio: '#2E7D32',
+    auto: '#455A64',
+    oficina: '#5D4037',
+    otro: '#546E7A'
+  },
   escuelas: {
     'solo_infantes': '#FFB74D',      // Naranja - Solo jardín
     'solo_primario': '#4CAF50',      // Verde - Solo primario
@@ -398,6 +408,18 @@ const COLOR_PALETTES = {
     'sin_niveles': '#E0E0E0',        // Gris - Sin niveles definidos
     'default': '#1976D2'             // Azul - Escuelas sin clasificación (GR/VA mesas)
   }
+};
+
+// Categorías de iconos para la capa Negocios (OSM)
+const NEGOCIO_CATEGORIES = {
+  banco: { label: 'Banco / ATM', icon: 'fas fa-university', colorKey: 'banco' },
+  restaurante: { label: 'Gastronomía', icon: 'fas fa-utensils', colorKey: 'restaurante' },
+  farmacia: { label: 'Farmacia', icon: 'fas fa-prescription-bottle-medical', colorKey: 'farmacia' },
+  combustible: { label: 'Combustible', icon: 'fas fa-gas-pump', colorKey: 'combustible' },
+  comercio: { label: 'Comercio', icon: 'fas fa-store', colorKey: 'comercio' },
+  auto: { label: 'Autos / Taller', icon: 'fas fa-car', colorKey: 'auto' },
+  oficina: { label: 'Oficina', icon: 'fas fa-briefcase', colorKey: 'oficina' },
+  otro: { label: 'Otro', icon: 'fas fa-map-marker-alt', colorKey: 'otro' }
 };
 
 // Traducciones para popups

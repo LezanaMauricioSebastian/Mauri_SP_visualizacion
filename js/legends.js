@@ -250,10 +250,16 @@ class LegendManager {
         </div>`;
         }
       } else if (layerName === 'Negocios') {
-        body += `<div class="legend-item">
-          <div class="legend-color" style="background:#2E7D32;border-radius:50%;width:12px;height:12px;"></div>
-          Negocios (OSM)
-        </div>`;
+        Object.keys(NEGOCIO_CATEGORIES).forEach((key) => {
+          const meta = NEGOCIO_CATEGORIES[key];
+          const color = COLOR_PALETTES.negocios[meta.colorKey] || '#546E7A';
+          body += `<div class="legend-item">
+            <div class="legend-color legend-negocio-icon" style="background:${color}">
+              <i class="${meta.icon}"></i>
+            </div>
+            ${meta.label}
+          </div>`;
+        });
         body += `<div style="margin-top:10px;padding:8px;background:#f8f9fa;border-radius:4px;font-size:0.8rem;color:#6c757d;">
           <strong>Fuente:</strong> OpenStreetMap (Overpass)<br>
           <small>Cobertura incompleta: son POIs mapeados, no un padrón comercial completo</small>

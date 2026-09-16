@@ -88,6 +88,51 @@ class MapUtils {
     return 'sin-manzana';
   }
 
+  static getNegocioCategoryKey(properties) {
+    if (!properties) return 'otro';
+    const amenity = properties.amenity || '';
+    const shop = properties.shop || '';
+    const office = properties.office || '';
+
+    if (amenity === 'bank' || amenity === 'atm') return 'banco';
+    if (
+      amenity === 'restaurant' || amenity === 'cafe' || amenity === 'fast_food' ||
+      amenity === 'bar' || amenity === 'pub' || amenity === 'biergarten' ||
+      amenity === 'ice_cream' || amenity === 'food_court'
+    ) return 'restaurante';
+    if (amenity === 'pharmacy') return 'farmacia';
+    if (amenity === 'fuel') return 'combustible';
+    if (
+      amenity === 'car_wash' ||
+      shop === 'car' || shop === 'car_repair' || shop === 'car_parts' ||
+      shop === 'motorcycle' || shop === 'motorcycle_repair'
+    ) return 'auto';
+    if (office || (properties.tipo && String(properties.tipo).startsWith('office='))) return 'oficina';
+    if (shop || amenity === 'marketplace') return 'comercio';
+    return 'otro';
+  }
+
+  static getNegocioCategory(properties) {
+    const key = MapUtils.getNegocioCategoryKey(properties);
+    const meta = NEGOCIO_CATEGORIES[key] || NEGOCIO_CATEGORIES.otro;
+    const color = (COLOR_PALETTES.negocios && COLOR_PALETTES.negocios[meta.colorKey]) || '#546E7A';
+    return { key, label: meta.label, icon: meta.icon, color };
+  }
+
+  static createNegocioDivIcon(properties) {
+    const cat = MapUtils.getNegocioCategory(properties);
+    return L.divIcon({
+      className: 'negocio-marker',
+      html: `<div class="negocio-pin" style="--pin-color:${cat.color}" title="${cat.label}">
+        <span class="negocio-pin-head"><i class="${cat.icon}" aria-hidden="true"></i></span>
+        <span class="negocio-pin-point"></span>
+      </div>`,
+      iconSize: [34, 44],
+      iconAnchor: [17, 42],
+      popupAnchor: [0, -38]
+    });
+  }
+
   static hasSchoolLevelFields(properties) {
     if (!properties) return false;
     return Object.prototype.hasOwnProperty.call(properties, 'nvcjinfantes') ||
@@ -496,10 +541,10 @@ class MapUtils {
         opacity: 0.8
       };
     } else if (layerName === 'Negocios') {
-      const color = '#2E7D32';
+      const cat = MapUtils.getNegocioCategory(feature.properties);
       return {
-        color: color,
-        fillColor: color,
+        color: cat.color,
+        fillColor: cat.color,
         weight: 2,
         fillOpacity: 0.75,
         opacity: 0.9,
